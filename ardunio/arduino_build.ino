@@ -27,6 +27,7 @@ Watchdog watchdog;
 #define NETWORK_DEBUG_MODE  0
 #define ENABLE_WATCHDOG 0
 #define EXTERNAL_SERIAL 1
+#define SMOOTH_MOUSE_MOVEMENT_OVERRIDE_EXISTING 1
 
 // -------------------------------------------------------------
 // Mouse Packet Ring Buffer (for storing host mouse events)
@@ -88,6 +89,7 @@ static bool maskMiddleButton = false;
 static bool maskMovement     = false;
 static uint32_t transactionIndex = 0;
 #define UDP_BUFFER_SIZE 1500 // Standard Ethernet MTU
+static const uint32_t MOVE_INTERVAL_MS = 1;
 
 inline int16_t ntohs(int16_t val) {
   return (val << 8) | ((val >> 8) & 0xFF);
@@ -362,17 +364,13 @@ void handleMouse() {
   mouse1.mouseDataClear();
 }
 
-// Minimum interval between sending chunks of mouse movement.
-// You might already have a global variable for this (e.g., minIntervalMs).
-static const uint32_t MOVE_INTERVAL_MS = 5;
-
 // State for non-blocking mouse movement
 struct MouseMoveState {
-  int32_t remainingX;
-  int32_t remainingY;
+  float remainingX;    // Track partial pixel movements
+  float remainingY;
   int16_t remainingWheel;
   int16_t remainingHWheel;
-  bool    active;
+  bool active;
   uint32_t lastMoveTime;
 };
 
@@ -383,13 +381,20 @@ static MouseMoveState mouseMoveState = {0, 0, 0, 0, false, 0};
    plus optional wheel/hwheel. Instead of doing it all at once,
    we store it in a state struct for incremental movement.
 */
-void processMouseMove(int32_t x, int32_t y, int16_t wheel, int16_t hwheel) {
-  // If there's already a movement in progress, you can either
-  // override it or accumulate. Here, we’ll override with the new request:
+void processMouseMove(float x, float y, int16_t wheel, int16_t hwheel) {
+  // Smooth mouse movement can be overridden to replace existing movement or
+  // added to existing movement.
+  #if SMOOTH_MOUSE_MOVEMENT_OVERRIDE_EXISTING
   mouseMoveState.remainingX     = x;
   mouseMoveState.remainingY     = y;
   mouseMoveState.remainingWheel = wheel;
   mouseMoveState.remainingHWheel = hwheel;
+  #else
+    mouseMoveState.remainingX     += x;
+    mouseMoveState.remainingY     += y;
+    mouseMoveState.remainingWheel += wheel;
+    mouseMoveState.remainingHWheel += hwheel;
+  #endif
   mouseMoveState.active         = true;
   mouseMoveState.lastMoveTime   = millis();
 }
@@ -400,60 +405,34 @@ void processMouseMove(int32_t x, int32_t y, int16_t wheel, int16_t hwheel) {
    then eventually applies wheel/hwheel after X/Y is done.
 */
 void updateMouseMovementState() {
-  if (!mouseMoveState.active) {
-    return; // No ongoing movement
-  }
+  if (!mouseMoveState.active) return;
 
   uint32_t now = millis();
+  if (now - mouseMoveState.lastMoveTime >= MOVE_INTERVAL_MS) {
+    // Calculate how much to move this frame
+    float dx = mouseMoveState.remainingX;
+    float dy = mouseMoveState.remainingY;
 
-  // Check if there is still X/Y movement left
-  if (mouseMoveState.remainingX != 0 || mouseMoveState.remainingY != 0) {
-    // Enforce minimal time between chunks
-    if (now - mouseMoveState.lastMoveTime >= MOVE_INTERVAL_MS) {
-      // Split large movements into 16-bit safe increments
-      int16_t dx = 0;
-      int16_t dy = 0;
+    // Clamp to ±127 (USB HID typical max per report)
+    int16_t moveX = (abs(dx) > 127) ? (dx > 0 ? 127 : -127) : (int16_t)dx;
+    int16_t moveY = (abs(dy) > 127) ? (dy > 0 ? 127 : -127) : (int16_t)dy;
 
-      // X-chunk
-      if (mouseMoveState.remainingX > 32767) {
-        dx = 32767;
-      } else if (mouseMoveState.remainingX < -32768) {
-        dx = -32768;
-      } else {
-        dx = (int16_t)mouseMoveState.remainingX;
-      }
+    // Apply the movement
+    Mouse.move(moveX, moveY, 0, 0);
 
-      // Y-chunk
-      if (mouseMoveState.remainingY > 32767) {
-        dy = 32767;
-      } else if (mouseMoveState.remainingY < -32768) {
-        dy = -32768;
-      } else {
-        dy = (int16_t)mouseMoveState.remainingY;
-      }
-
-      // Move by this chunk
-      Mouse.move(dx, dy, 0, 0);
-
-      // Decrement from our remaining totals
-      mouseMoveState.remainingX -= dx;
-      mouseMoveState.remainingY -= dy;
-
-      // Update time
+    // Update remainders
+    mouseMoveState.remainingX -= moveX;
+    mouseMoveState.remainingY -= moveY;
       mouseMoveState.lastMoveTime = now;
-    }
   }
   else {
-    // X/Y is done, now check if wheel/hwheel remains
     if (mouseMoveState.remainingWheel != 0 || mouseMoveState.remainingHWheel != 0) {
       if (now - mouseMoveState.lastMoveTime >= MOVE_INTERVAL_MS) {
         // Move wheel/hwheel exactly once
         Mouse.move(0, 0, mouseMoveState.remainingWheel, mouseMoveState.remainingHWheel);
-
         // Clear them out
         mouseMoveState.remainingWheel  = 0;
         mouseMoveState.remainingHWheel = 0;
-
         mouseMoveState.lastMoveTime = now;
       }
     } else {
@@ -466,7 +445,6 @@ void updateMouseMovementState() {
 // -------------------------------------------------------------
 // Bézier Curve Mouse Motion (Non-Blocking)
 // -------------------------------------------------------------
-
 struct BezierState {
   elapsedMillis timer;
   float t = 0.0;
@@ -476,24 +454,30 @@ struct BezierState {
 
 BezierState bezierState;
 
+// Simulate mouse movement along a Bézier curve
 void simulateBezierMouseMove(int targetX, int targetY, int durationMs, int cx1, int cy1, int cx2, int cy2) {
   if (!bezierState.active) {
     bezierState = {0, 0.0, 0, 0, true};  // Reset state
   }
 
-  if (bezierState.timer >= 10 && bezierState.t <= 1.0) {
+  if (bezierState.timer >= 10 && bezierState.t <= 1.0f) {
     bezierState.timer = 0;
-    float u = 1.0 - bezierState.t;
+    float u = 1.0f - bezierState.t;
     float x = 3 * u * u * bezierState.t * cx1 + 3 * u * bezierState.t * bezierState.t * cx2 + bezierState.t * bezierState.t * bezierState.t * targetX;
     float y = 3 * u * u * bezierState.t * cy1 + 3 * u * bezierState.t * bezierState.t * cy2 + bezierState.t * bezierState.t * bezierState.t * targetY;
     processMouseMove((int)x, (int)y, 0, 0);
-    bezierState.t += (10.0 / durationMs);
-  } else if (bezierState.t > 1.0) {
+    bezierState.t += (10.0f / durationMs);
+  } else if (bezierState.t > 1.0f) {
     bezierState.active = false;
+    bezierState.t = 1.0f; // Clamp to 1.0
   }
+
 }
 
-void handleLCDImageCommand(const uint8_t* data, int size) {// not implemented
+// -------------------------------------------------------------
+// Handle LCD Image Command (not implemented)
+// -------------------------------------------------------------
+void handleLCDImageCommand(const uint8_t* data, int size) {
   // Validate packet structure
   if (size < sizeof(cmd_head_t) + 1024) { // 16-byte header + 1024 image data
 #if NETWORK_DEBUG_MODE
@@ -535,11 +519,9 @@ void processPacket(const uint8_t* data, int size, IPAddress remoteIP, uint16_t r
 #endif
     return;
   }
-
   const cmd_head_t* header = reinterpret_cast<const cmd_head_t*>(data);
   uint32_t cmd = ntohl(header->cmd);
   uint32_t clientMac = ntohl(header->mac);
-
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
   Serial1.printf("CMD: 0x%08X MAC: 0x%08X\n", cmd, clientMac);
@@ -547,7 +529,6 @@ void processPacket(const uint8_t* data, int size, IPAddress remoteIP, uint16_t r
   Serial.printf("CMD: 0x%08X MAC: 0x%08X\n", cmd, clientMac);
 #endif
 #endif
-
   switch (cmd) {
     // -------------------------------
     // Connection Command
