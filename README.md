@@ -10,7 +10,8 @@ This tool is primarily tested on the teensy 4.1 chip, but it should work on any 
 - 1 usb port capable of running in host mode (either integrated or host shield)
 - On-device usb phy or support for a device like a wd5500 (Teensy, esp32, etc)
 - SPI or tft display (on device or added)
-- Optionally an external serial device (cp2102, etc) can be connected on Serial1 if supported by the device for debugging/logging without modifying the usb device
+> [!TIP]
+> Using a seperate serial device is supported to debug the build without adding a com port to the main PC.
 
 ## Protocol Support
 
@@ -34,9 +35,14 @@ This is a drop-in replacement that can be used with software (YOLO-based, DMA-ba
 
 The following steps are geared mainly for the teensy build and assumes your device will be connected to an ethernet router. If the overlay pc and device are both wired to the same switch latecy is generally fine, but if the overlay PC is using wifi you should wire the device to the open ethernet port.
 
-- Use a usb device descriptor tool (like mac-hid-dump) to get the vendor name, device name, and hid/vid. Add those to `ardunio/teensy4_usb_descriptor.c` following the existing format
+- Use a usb device descriptor tool (like `scripts/getUsbDescriptors.py` ) to pull your existing mouse descriptors. The product name, manufacturer name and serial should be added to `ardunio/teensy4_usb_descriptor.c` following the existing format. 
+- Update the PID/VID values in your arduino libarary (the avr for for a teensy 4.1 `/teensy/avr/cores/teensy3/usb_desc.h`). Make sure to click verify in the Arduino IDE to recompile the hex before you load it. 
+> [!WARNING]  
+> Most loaders will no longer recognize your device automatically after this step. For example a teensy will need the flash button to be pressed before youre able to flash it again. 
 - Connect your usb otg cable and ethernet phy as needed, and add the display to your spi port
-- Flash your chip with `arduino/arduino_build.ino`, making sure to put the device usb port into keyboard/mouse/joystick mode
-- Connect your mouse to the usb otg plug, ethernet wire to your switch, and usb cord to a PC (I recommend test on the overlay pc first)
-- After you've tested a coupld mouse movements and confirmed the device name in your device manager (or any OS), swap the device plug to your gaming PC and connect your overlay pc to the device ip and id number shown on the display
+- Flash your chip with `arduino/arduino_build.ino`, making sure to put the device usb port into keyboard/mouse/joystick mode and not in a serial mode to prevent COM ports from being added. A serial device can be added to a seperate port and plugged into a seperate PC if the feature is needed.
+- Connect your mouse to the usb otg plug, ethernet wire to your switch, and usb cord to a PC
+> [!TIP]
+> You should plug your device into your second PC first and validate that the descriptors look as expected
+- Plug the USB port on your teensy into your gaming PC and connect your overlay pc to the ip and port shown on the device (or in the serial console)
 - Tada!
