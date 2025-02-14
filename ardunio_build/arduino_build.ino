@@ -630,7 +630,7 @@ void processPacket(const uint8_t *data, int size, IPAddress remoteIP, uint16_t r
   uint32_t clientMac = ntohl(header->mac);
 #if NETWORK_DEBUG_MODE
   char debugStr[64];
-  snprintf(debugStr, sizeof(debugStr), "CMD: 0x%08X MAC: 0x%08X", cmd, clientMac);
+  snprintf(debugStr, sizeof(debugStr), "CMD: 0x%08X MAC: 0x%08X", (unsigned int)cmd, (unsigned int)clientMac);
   _writeSerial(debugStr);
 #endif
   if (!overlayEnabled)
@@ -701,7 +701,7 @@ void processPacket(const uint8_t *data, int size, IPAddress remoteIP, uint16_t r
     break;
   }
 
-  case CMD_MOUSE_MIDDLE:
+  case CMD_MOUSE_RIGHT:
   { // cmd_mouse_right
     if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
     {
@@ -788,7 +788,7 @@ void processPacket(const uint8_t *data, int size, IPAddress remoteIP, uint16_t r
   default:
 #if NETWORK_DEBUG_MODE
     char debugStr[64];
-    snprintf(debugStr, sizeof(debugStr), "Unknown command: 0x%08X", cmd);
+    snprintf(debugStr, sizeof(debugStr), "Unknown command: 0x%08X", (unsigned int)cmd);
     _writeSerial(debugStr);
 #endif
     break;
@@ -969,7 +969,7 @@ void loop()
       uint32_t latency = now - p.millis_stamp;
       char debugStr[128];
       snprintf(debugStr, sizeof(debugStr), "Captured host mouse => dx=%d dy=%d wheel=%d hwheel=%d btn=0x%02X (Latency: %u ms)",
-               p.dx, p.dy, p.wheel, p.hwheel, p.buttons, latency);
+               p.dx, p.dy, p.wheel, p.hwheel, p.buttons, (unsigned int)latency);
       _writeSerial(debugStr);
     }
 #else
