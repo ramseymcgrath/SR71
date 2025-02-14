@@ -1,17 +1,50 @@
 // -------------------------------------------------------------
 // Whole bunch of includes
 // -------------------------------------------------------------
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
 #include <NativeEthernet.h>
 #include <NativeEthernetUdp.h>
 #include "kmboxNet.h"
 #include <Watchdog.h>
 #include <USBHost_t36.h>
 #include <Mouse.h>
-//Unknown command: 0x28283CAF
+#include <SPI.h>
+#include <Wire.h>
+#include <ILI9341_t3.h>
+#include <XPT2046_Touchscreen.h>
 
-// Teensy USB Host
+// -------------------------------------------------------------
+// Arguments for display
+// -------------------------------------------------------------
+#define TS_MINX 150
+#define TS_MINY 130
+#define TS_MAXX 3800
+#define TS_MAXY 4000
+#define TOUCH_CS  8
+XPT2046_Touchscreen ts(TOUCH_CS);
+#define TIRQ_PIN  2
+
+#define TFT_DC  9
+#define TFT_CS 10
+#define TFT_RST 7
+#define TFT_SCK 13
+#define TFT_MISO 12
+#define TFT_MOSI 11
+ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
+
+#define FRAME_X 210
+#define FRAME_Y 180
+#define FRAME_W 100
+#define FRAME_H 50
+
+// Display layout constants
+#define STATUS_X 10
+#define STATUS_Y_START 10
+#define STATUS_LINE_HEIGHT 20  // Adjust based on font height
+#define STATUS_MAX_LINES 4
+#define STATUS_WIDTH 200
+// -------------------------------------------------------------
+// USB Host Setup
+// -------------------------------------------------------------
 USBHost         myusb;        // The USB host object
 USBHIDParser    hid1(myusb);  // HID parser
 MouseController mouse1(myusb);
@@ -23,11 +56,17 @@ Watchdog watchdog;
 // Debug Modes
 // DEBUG_MODE is general messages, NETWORK_DEBUG is more general
 // -------------------------------------------------------------
-#define DEBUG_MODE  0
-#define NETWORK_DEBUG_MODE  0
-#define ENABLE_WATCHDOG 0
-#define EXTERNAL_SERIAL 1
-#define SMOOTH_MOUSE_MOVEMENT_OVERRIDE_EXISTING 1
+#define DEBUG_MODE  1
+#define NETWORK_DEBUG_MODE  1
+
+// -----------------------------
+// Feature flags (TODO: add some to ui)
+// -----------------------------
+#define SMOOTH_MOUSE_MOVEMENT_OVERRIDE_EXISTING 1 // override existing movements when smoothing or add to end of buffer 
+#define EXTERNAL_SERIAL 1 // allows debugging without a main pc com port
+#define ENABLE_WATCHDOG 0 // gracefully handle crashes
+#define MAX_MOVE_SPEED 3 // max packet output from device (make this something reasonable)
+#define MOUSE_MOVE_INTERVAL // set as low as possible, this is number of times the mouse position updates in chip
 
 // -------------------------------------------------------------
 // Mouse Packet Ring Buffer (for storing host mouse events)
@@ -43,22 +82,13 @@ typedef struct __attribute__((packed)) {
 
 #define N_MOUSE_PACKETS 16
 // Use this to cap the number of updates that can be sent to avoid empty packet spam
-const uint32_t minIntervalMs = 5; // something close to human speeds
+const uint32_t minIntervalMs = MAX_MOVE_SPEED;
 
 // Place the ring buffer in DMAMEM for faster access
 DMAMEM __attribute__((aligned(32))) static MousePacket mouse_ring[N_MOUSE_PACKETS];
 static volatile uint8_t mouse_ring_head = 0;
 static volatile uint8_t mouse_ring_tail = 0;
-// Forward declaration (at top of file)
 void processPacket(const uint8_t* data, int size, IPAddress remoteIP, uint16_t remotePort);
-
-// -------------------------------------------------------------
-// OLED Display Setup
-// -------------------------------------------------------------
-#define SCREEN_WIDTH  128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET    -1
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // -------------------------------------------------------------
 // Ethernet / UDP Setup
@@ -90,6 +120,7 @@ static bool maskMovement     = false;
 static uint32_t transactionIndex = 0;
 #define UDP_BUFFER_SIZE 1500 // Standard Ethernet MTU
 static const uint32_t MOVE_INTERVAL_MS = 1;
+bool overlayEnabled = true;
 
 inline int16_t ntohs(int16_t val) {
   return (val << 8) | ((val >> 8) & 0xFF);
@@ -105,7 +136,7 @@ inline int32_t ntohl(int32_t val) {
 // ------------------
 // Network ring buffer
 // -----------------
-#define N_NET_PACKETS 60 // Adjust based on expected packet rate
+#define N_NET_PACKETS 60 // raise this to support more network traffic if needed
 struct Packet {
   uint8_t data[UDP_BUFFER_SIZE];
   int size;
@@ -126,7 +157,7 @@ void sendMonitorEvent(const char* eventString);
 // -------------------------------------------------------------
 void _softRestart() {
 #if EXTERNAL_SERIAL
-  Serial1.end();
+  Serial8.end();
 #else
   Serial.end();
 #endif
@@ -139,7 +170,7 @@ void _softRestart() {
 bool initializeEthernet() {
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
 #if EXTERNAL_SERIAL
-    Serial1.println("Ethernet hardware not found.");
+    Serial8.println("Ethernet hardware not found.");
 #else
     Serial.println("Ethernet hardware not found.");
 #endif
@@ -150,7 +181,7 @@ bool initializeEthernet() {
   // Attempt DHCP with 10s timeout
   if (Ethernet.begin(mac, 10000) == 0) {
 #if EXTERNAL_SERIAL
-    Serial1.println("Failed DHCP. Using static IP.");
+    Serial8.println("Failed DHCP. Using static IP.");
 #else
     Serial.println("Failed DHCP. Using static IP.");
 #endif
@@ -160,7 +191,7 @@ bool initializeEthernet() {
 
   if (Ethernet.linkStatus() == LinkOFF) {
 #if EXTERNAL_SERIAL
-    Serial1.println("Ethernet cable is not connected.");
+    Serial8.println("Ethernet cable is not connected.");
 #else
     Serial.println("Ethernet cable is not connected.");
 #endif
@@ -176,8 +207,8 @@ bool initializeEthernet() {
            localPort);
   writeDisplay("Ethernet:", ipStr, 1);
 #if EXTERNAL_SERIAL
-  Serial1.print("Ethernet IP:");
-  Serial1.println(Ethernet.localIP());
+  Serial8.print("Ethernet IP:");
+  Serial8.println(Ethernet.localIP());
 #else
   Serial.print("Ethernet IP:");
   Serial.println(Ethernet.localIP());
@@ -197,28 +228,57 @@ void generateHardwareUUID() {
            "%08X", // 8-character uppercase hex
            (unsigned int)uid);
 }
+// -------------------------------------------------------------
+// Display Layout Constants
+// -------------------------------------------------------------
+#define STATUS_X 10
+#define STATUS_Y_START 10
+#define STATUS_LINE_HEIGHT 20
+#define STATUS_MAX_LINES 4
+#define STATUS_WIDTH 200
+
+// Predefined sections (0-3)
+// Section 0: Mouse Status (line 1)
+// Section 1: Ethernet Status (line 2)
+// Section 2: UUID (line 3)
+// Section 3: Service Status (line 4)
 
 // -------------------------------------------------------------
-// OLED Display Helper
+// TFT Displ
 // -------------------------------------------------------------
-#define NUM_DISPLAY_SECTIONS 4
-static char prevDisplay[NUM_DISPLAY_SECTIONS][64] = {{0}};
-
 void writeDisplay(const char *header, const char *message, int section) {
-  char newDisplay[64];
-  snprintf(newDisplay, sizeof(newDisplay), "%s %s", header, message);
-  if (strcmp(newDisplay, prevDisplay[section]) == 0) {
-    return; // no change
-  }
-  strncpy(prevDisplay[section], newDisplay, sizeof(prevDisplay[section]));
+  if (section < 0 || section >= STATUS_MAX_LINES) return;
 
-  int y = section * 16;
-  display.fillRect(0, y, SCREEN_WIDTH, 16, SSD1306_BLACK);
-  display.setCursor(0, y);
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.print(newDisplay);
-  display.display();
+  tft.setTextSize(1);
+
+  // Calculate position
+  int yPos = STATUS_Y_START + (section * STATUS_LINE_HEIGHT);
+
+  // Clear previous content
+  tft.fillRect(STATUS_X, yPos, STATUS_WIDTH, STATUS_LINE_HEIGHT, ILI9341_BLUE);
+
+  tft.setCursor(STATUS_X, yPos);
+  tft.setTextColor(ILI9341_WHITE, ILI9341_BLUE);
+
+  // Fixed header handling with proper string checks
+  if (header && strlen(header) > 0) {
+    tft.print(header);
+    tft.print(": ");
+  }
+  if (message) {
+    tft.print(message);
+  }
+
+  // Debug output with null checks
+#if EXTERNAL_SERIAL
+  Serial8.printf("[Display%d] %s%s\n", section, header ? header : "", message ? message : "");
+#else
+  Serial.printf("[Display%d] %s%s\n", section, header ? header : "", message ? message : "");
+#endif
+}
+
+void drawFrame() {
+  tft.drawRect(FRAME_X, FRAME_Y, FRAME_W, FRAME_H, ILI9341_BLACK);
 }
 
 // -------------------------------------------------------------
@@ -249,7 +309,7 @@ static inline bool getNextMousePacket(MousePacket &pkt) {
 }
 
 // -------------------------------------------------------------
-// Auto Mouse Move Helper (Optimized with FPU and Non-Blocking Logic)
+// Auto Mouse Move Helper
 // -------------------------------------------------------------
 struct AutoMoveState {
   bool active = false;
@@ -292,7 +352,7 @@ void updateAutoMouseMove() {
 // Send Monitor Event (if monitorEnabled is true)
 // -------------------------------------------------------------
 void sendMonitorEvent(const char* eventString) {
-  if (!monitorEnabled) return; // optional check
+  if (!monitorEnabled) return;
   Udp.beginPacket(monitorIP, monitorPort);
   Udp.write(eventString);
   Udp.endPacket();
@@ -376,34 +436,24 @@ struct MouseMoveState {
 
 static MouseMoveState mouseMoveState = {0, 0, 0, 0, false, 0};
 
-/**
-   Called whenever you want to move the mouse by (x, y),
-   plus optional wheel/hwheel. Instead of doing it all at once,
-   we store it in a state struct for incremental movement.
-*/
 void processMouseMove(float x, float y, int16_t wheel, int16_t hwheel) {
   // Smooth mouse movement can be overridden to replace existing movement or
   // added to existing movement.
-  #if SMOOTH_MOUSE_MOVEMENT_OVERRIDE_EXISTING
+#if SMOOTH_MOUSE_MOVEMENT_OVERRIDE_EXISTING
   mouseMoveState.remainingX     = x;
   mouseMoveState.remainingY     = y;
   mouseMoveState.remainingWheel = wheel;
   mouseMoveState.remainingHWheel = hwheel;
-  #else
-    mouseMoveState.remainingX     += x;
-    mouseMoveState.remainingY     += y;
-    mouseMoveState.remainingWheel += wheel;
-    mouseMoveState.remainingHWheel += hwheel;
-  #endif
+#else
+  mouseMoveState.remainingX     += x;
+  mouseMoveState.remainingY     += y;
+  mouseMoveState.remainingWheel += wheel;
+  mouseMoveState.remainingHWheel += hwheel;
+#endif
   mouseMoveState.active         = true;
   mouseMoveState.lastMoveTime   = millis();
 }
 
-/**
-   Call this once per 'loop()' to process incremental mouse movement.
-   It applies small chunks of (x, y) at intervals of MOVE_INTERVAL_MS,
-   then eventually applies wheel/hwheel after X/Y is done.
-*/
 void updateMouseMovementState() {
   if (!mouseMoveState.active) return;
 
@@ -423,7 +473,7 @@ void updateMouseMovementState() {
     // Update remainders
     mouseMoveState.remainingX -= moveX;
     mouseMoveState.remainingY -= moveY;
-      mouseMoveState.lastMoveTime = now;
+    mouseMoveState.lastMoveTime = now;
   }
   else {
     if (mouseMoveState.remainingWheel != 0 || mouseMoveState.remainingHWheel != 0) {
@@ -479,10 +529,10 @@ void simulateBezierMouseMove(int targetX, int targetY, int durationMs, int cx1, 
 // -------------------------------------------------------------
 void handleLCDImageCommand(const uint8_t* data, int size) {
   // Validate packet structure
-  if (size < sizeof(cmd_head_t) + 1024) { // 16-byte header + 1024 image data
+  if (size < (int)sizeof(cmd_head_t) + 1024) { // 16-byte header + 1024 image data
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-    Serial1.println("Invalid LCD image packet");
+    Serial8.println("Invalid LCD image packet");
 #else
     Serial.println("Invalid LCD image packet");
 #endif
@@ -494,16 +544,14 @@ void handleLCDImageCommand(const uint8_t* data, int size) {
   const uint8_t* imageData = data + sizeof(cmd_head_t);
   int chunkIndex = ntohl(*(const uint32_t*)(imageData)); // First 4 bytes: chunk index
 
-  // Write to display buffer (implementation depends on your LCD library)
+  // Write to display buffer //TODO
   //display.drawBitmap(0, 0, imageData + 4, 128, 64, SSD1306_WHITE);
   //display.display();
 
-#if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-  Serial1.printf("LCD image chunk %d received\n", chunkIndex);
+  Serial8.printf("LCD image chunk %d received\n", chunkIndex);
 #else
   Serial.printf("LCD image chunk %d received\n", chunkIndex);
-#endif
 #endif
 }
 
@@ -512,7 +560,7 @@ void processPacket(const uint8_t* data, int size, IPAddress remoteIP, uint16_t r
   if (size < (int)(sizeof(cmd_head_t))) {
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-    Serial1.println("ERROR: Packet too small");
+    Serial8.println("ERROR: Packet too small");
 #else
     Serial.println("ERROR: Packet too small");
 #endif
@@ -524,11 +572,14 @@ void processPacket(const uint8_t* data, int size, IPAddress remoteIP, uint16_t r
   uint32_t clientMac = ntohl(header->mac);
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-  Serial1.printf("CMD: 0x%08X MAC: 0x%08X\n", cmd, clientMac);
+  Serial8.printf("CMD: 0x%08X MAC: 0x%08X\n", cmd, clientMac);
 #else
   Serial.printf("CMD: 0x%08X MAC: 0x%08X\n", cmd, clientMac);
 #endif
 #endif
+  if (!overlayEnabled) {
+    return;
+  }
   switch (cmd) {
     // -------------------------------
     // Connection Command
@@ -661,7 +712,7 @@ void processPacket(const uint8_t* data, int size, IPAddress remoteIP, uint16_t r
     default:
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-      Serial1.printf("Unknown command: 0x%08X\n", cmd);
+      Serial8.printf("Unknown command: 0x%08X\n", cmd);
 #else
       Serial.printf("Unknown command: 0x%08X\n", cmd);
 #endif
@@ -683,7 +734,7 @@ void handleConnect(const cmd_head_t* header, IPAddress remoteIP, uint16_t remote
     sendAckResponse(header, remoteIP, remotePort);
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-    Serial1.println("Valid client connected");
+    Serial8.println("Valid client connected");
 #else
     Serial.println("Valid client connected");
 #endif
@@ -692,7 +743,7 @@ void handleConnect(const cmd_head_t* header, IPAddress remoteIP, uint16_t remote
     sendAckResponse(header, remoteIP, remotePort);
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-    Serial1.println("Invalid client MAC");
+    Serial8.println("Invalid client MAC");
 #else
     Serial.println("Invalid client MAC");
 #endif
@@ -721,7 +772,7 @@ void handleMonitorCommand(const uint8_t* data, int size, IPAddress remoteIP, uin
   if (size < (int)(sizeof(cmd_head_t) + sizeof(monitor_cmd_t))) {
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-    Serial1.println("Invalid monitor command: packet too small");
+    Serial8.println("Invalid monitor command: packet too small");
 #else
     Serial.println("Invalid monitor command: packet too small");
 #endif
@@ -736,7 +787,7 @@ void handleMonitorCommand(const uint8_t* data, int size, IPAddress remoteIP, uin
 
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-  Serial1.printf("Monitoring enabled: %d.%d.%d.%d:%d\n",
+  Serial8.printf("Monitoring enabled: %d.%d.%d.%d:%d\n",
                  monitorIP[0], monitorIP[1],
                  monitorIP[2], monitorIP[3],
                  monitorPort);
@@ -753,7 +804,7 @@ void handleMaskCommand(const uint8_t* data, int size) {
   if (size < (int)(sizeof(cmd_head_t) + sizeof(mask_cmd_t))) {
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-    Serial1.println("Invalid mask command: packet too small");
+    Serial8.println("Invalid mask command: packet too small");
 #else
     Serial.println("Invalid mask command: packet too small");
 #endif
@@ -771,7 +822,7 @@ void handleMaskCommand(const uint8_t* data, int size) {
 
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-  Serial1.printf("Mouse masks: L=%d R=%d M=%d Move=%d\n",
+  Serial8.printf("Mouse masks: L=%d R=%d M=%d Move=%d\n",
                  maskLeftButton, maskRightButton,
                  maskMiddleButton, maskMovement);
 #else
@@ -790,32 +841,35 @@ void setup() {
   watchdog.enable(Watchdog::TIMEOUT_8S);
 #endif
 #if EXTERNAL_SERIAL
-  Serial1.begin(115200);
+  Serial8.begin(115200);
 #else
   Serial.begin(115200);
 #endif
 
-  // Initialize the OLED
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+  tft.begin();
+  tft.fillScreen(ILI9341_BLUE);
+  tft.setTextWrap(false);
+  tft.setRotation(1);
+
+  ts.begin();
+
+  if (!ts.begin()) {
 #if EXTERNAL_SERIAL
-    Serial1.println("SSD1306 allocation failed");
+  Serial8.println("Touchscreen failed");
 #else
-    Serial.println("SSD1306 allocation failed");
+  Serial.println("Touchscreen failed");
 #endif
-    while (true) {
-      /* hang */
-    }
+  } else {
+    #if EXTERNAL_SERIAL
+  Serial8.println("Touchscreen started");
+#else
+  Serial.println("Touchscreen started");
+#endif
   }
-
-  display.clearDisplay();
-  display.display();
-  delay(500);
-  writeDisplay("Log:", "Display OK", 0);
-  // Initialize USB Host
+  
   myusb.begin();
-
 #if EXTERNAL_SERIAL
-  Serial1.println("USB Host started.");
+  Serial8.println("USB Host started.");
 #else
   Serial.println("USB Host started.");
 #endif
@@ -829,51 +883,44 @@ void setup() {
 
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-    Serial1.print("UDP listening on port ");
-    Serial1.println(localPort);
+    Serial8.print("UDP listening on port ");
+    Serial8.println(localPort);
 #else
     Serial.print("UDP listening on port ");
     Serial.println(localPort);
 #endif
 #endif
-
   }
+
   generateHardwareUUID();
-  writeDisplay("Device UUID:", deviceUUID, 2);
+  writeDisplay("UUID", deviceUUID, 2);
 
 #if EXTERNAL_SERIAL
-  Serial1.printf("Device UUID: %s\n", deviceUUID);
+  Serial8.printf("Device UUID: %s\n", deviceUUID);
 #else
   Serial.printf("Device UUID: %s\n", deviceUUID);
 #endif
 
   // Start usb device
   Mouse.begin();
-
 #if EXTERNAL_SERIAL
-  Serial1.println("Mouse initialized.");
+  Serial8.println("Mouse initialized.");
 #else
   Serial.println("Mouse initialized.");
 #endif
 
-  writeDisplay("Service:", "Disconnected", 3);
-
+  writeDisplay("Service", "Offline", 3);
 #if EXTERNAL_SERIAL
-  Serial1.println("Setup complete.");
+  Serial8.println("Setup complete.");
 #else
   Serial.println("Setup complete.");
 #endif
   pinMode(LED_BUILTIN, OUTPUT);
 }
-
 // -------------------------------------------------------------
 // 17) loop()
 // -------------------------------------------------------------
 void loop() {
-  // watchdog safety timer
-#if ENABLE_WATCHDOG
-  const unsigned long time = millis();
-#endif
   // Keep USB Host tasks updated
   myusb.Task();
   handleMouse();
@@ -890,7 +937,7 @@ void loop() {
     while (getNextMousePacket(p)) {
       uint32_t latency = now - p.millis_stamp;
 #if EXTERNAL_SERIAL
-      Serial1.printf("Captured host mouse => dx=%d dy=%d wheel=%d hwheel=%d btn=0x%02X (Latency: %u ms)\n",
+      Serial8.printf("Captured host mouse => dx=%d dy=%d wheel=%d hwheel=%d btn=0x%02X (Latency: %u ms)\n",
                      p.dx, p.dy, p.wheel, p.hwheel, p.buttons, latency);
 #else
       Serial.printf("Captured host mouse => dx=%d dy=%d wheel=%d hwheel=%d btn=0x%02X (Latency: %u ms)\n",
@@ -927,8 +974,8 @@ void loop() {
     while ((packetSize = Udp.parsePacket()) > 0) {
 #if NETWORK_DEBUG_MODE
 #if EXTERNAL_SERIAL
-      Serial1.print("Got a packet, size=");
-      Serial1.println(packetSize);
+      Serial8.print("Got a packet, size=");
+      Serial8.println(packetSize);
 #else
       Serial.print("Got a packet, size=");
       Serial.println(packetSize);
@@ -975,11 +1022,30 @@ void loop() {
     ledState = !ledState;
     digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
   }
+  boolean istouched = ts.touched();
+  if (istouched) {
+    if (overlayEnabled) { // Disable udp command parsing
+#if EXTERNAL_SERIAL
+      Serial8.println("Overlay disabled");
+#else
+      Serial.println("Overlay disabled");
+#endif
+      overlayEnabled = false;
+      writeDisplay("Service", "Disabled", 3);
+    } else { // reenable udp command parsing
+#if EXTERNAL_SERIAL
+      Serial8.println("Overlay enabled");
+#else
+      Serial.println("Overlay enabled"); x
+#endif
+      overlayEnabled = true;
+      writeDisplay("Service", "Enabled", 3);
+    }
+  }
 #if ENABLE_WATCHDOG
   // Watchdog handling
-  if (((time - enabled_time) <= TIMEOUT_DURATION) && ((time - reset_time) >= RESET_DURATION))
-  {
-    reset_time = time;
+  if (((time - enabled_time) <= TIMEOUT_DURATION) && ((now - reset_time) >= RESET_DURATION)) {
+    reset_time = now;
     watchdog.reset();
   }
 #endif
