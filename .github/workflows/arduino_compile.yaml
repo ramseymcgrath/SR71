@@ -1,0 +1,44 @@
+# This is the name of the workflow, visible on GitHub UI.
+name: test
+ 
+# Here we tell GitHub to run the workflow when a commit
+# is pushed or a Pull Request is opened.
+on: [push, pull_request]
+ 
+jobs:
+  compile-sketch:
+    strategy:
+      matrix:
+        arduino-platform: ["teensy:avr"]
+        include:
+          # This works like this: when the platform is "arduino:samd", the
+          # variable fqbn is set to "arduino:samd:nano_33_iot".
+          - arduino-platform: "teensy:avr"
+            fqbn: "teensy:avr:teensy41"
+ 
+    # This is the platform GitHub will use to run our workflow, we
+    # pick Windows for no particular reason.
+    runs-on: ubuntu-latest
+ 
+    # This is the list of steps this job will run.
+    steps:
+      # First of all, we clone the repo using the checkout action.
+      - name: Checkout
+        uses: actions/checkout@master
+ 
+      # We use the arduino/setup-arduino-cli action to install and
+      # configure the Arduino CLI on the system.
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v1.0.0
+ 
+      # We then install the platform, which one will be determined
+      # dynamically by the build matrix.
+      - name: Install platform
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install ${{ matrix.arduino-platform }}
+ 
+      # Finally, we compile the sketch, using the FQBN that was set
+      # in the build matrix.
+      - name: Compile Sketch
+        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./arduino_build/arduino_build.ino
