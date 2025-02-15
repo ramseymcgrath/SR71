@@ -9,9 +9,9 @@ This tool is primarily tested on the teensy 4.1 chip, but it should work on any 
 - 1 usb port capable of running in device mode (most chips can do it)
 - 1 usb port capable of running in host mode (either integrated or host shield)
 - On-device usb phy or support for a device like a wd5500 (Teensy, esp32, etc)
-- SPI or tft display (on device or added)
+- TFT status display (ILI9341 recommended but any tft should work)
 > [!TIP]
-> Using a seperate serial device is supported to debug the build without adding a com port to the main PC.
+> Using a seperate serial device is supported. Use it to debug or read logs without adding a com port to the main PC.
 
 ## Protocol Support
 
@@ -22,14 +22,15 @@ This is a drop-in replacement that can be used with software (YOLO-based, DMA-ba
 
 ## Features
 
-- Custom USB descriptors are added to the device-mode output (user-provided)
+- Custom USB descriptors are added to the device-mode output (ids are user-provided)
 - Built-in protection against all ekknod detection-vectors
 - Api key authentication (an id is generated on your device for security, no need to purchase anything)
 - Buffering for both HID and UDP inputs to safely handle mismatches in speed
 - Smoothing for USB output to conceal rapid automated movements
 - Bezier curve commands
 - Auto-move commands
-- Support for all operating systems
+- Windows/OSX/Linux Support
+- On-screen status indicators
 
 ## Quick-start (for devices that support ino)
 

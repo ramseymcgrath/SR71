@@ -15,21 +15,13 @@
 // -------------------------------------------------------------
 // Arguments for display
 // -------------------------------------------------------------
-#define TS_MINX 150
-#define TS_MINY 130
-#define TS_MAXX 3800
-#define TS_MAXY 4000
-#define TOUCH_CS 8
-#define TIRQ_PIN 29
-XPT2046_Touchscreen ts(TOUCH_CS, TIRQ_PIN);
-
+#define TFT_MISO 12
+#define TFT_SCK 13
+#define TFT_MOSI 11
 #define TFT_DC 9
 #define TFT_CS 10
-#define TFT_RST 255 // 255 = unused, connect to 3.3V
-#define TFT_SCK 13
-#define TFT_MISO 12
-#define TFT_MOSI 11
-ILI9341_t3 tft(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
+#define TFT_RST 255
+ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
 
 #define FRAME_X 210
 #define FRAME_Y 180
@@ -57,10 +49,10 @@ Watchdog watchdog;
 
 // -------------------------------------------------------------
 // Debug Modes
-// DEBUG_MODE is general messages, NETWORK_DEBUG is more general
+// DEBUG_MODE is general messages, NETWORK_DEBUG is more network'y
 // -------------------------------------------------------------
-#define DEBUG_MODE 1
-#define NETWORK_DEBUG_MODE 1
+#define DEBUG_MODE 0
+#define NETWORK_DEBUG_MODE 0
 
 // -----------------------------
 // Feature flags (TODO: add some to tft display)
@@ -70,6 +62,7 @@ Watchdog watchdog;
 #define ENABLE_WATCHDOG 0                         // gracefully handle crashes
 #define MAX_MOVE_SPEED 3                          // max packet output from device (make this something reasonable)
 #define MOUSE_MOVE_INTERVAL 1                     // set as low as possible, this is number of times the mouse position updates in chip
+#define WAIT_FOR_SERIAL 0                         // wait for serial before setting up
 
 // -------------------------------------------------------------
 // Mouse Packet Ring Buffer (for storing host mouse events)
@@ -163,11 +156,7 @@ void sendMonitorEvent(const char *eventString);
 // -------------------------------------------------------------
 void _softRestart()
 {
-#if EXTERNAL_SERIAL
-  Serial8.end();
-#else
-  Serial.end();
-#endif
+  _endSerial();
   SCB_AIRCR = 0x05FA0004; // Write value for restart
 }
 
@@ -180,6 +169,32 @@ void _writeSerial(const char *message)
   Serial8.println(message);
 #else
   Serial.println(message);
+#endif
+}
+
+void _beginSerial()
+{
+#if EXTERNAL_SERIAL
+  Serial8.begin(115200);
+#else
+  Serial.begin();
+#endif
+#if WAIT_FOR_SERIAL
+#if EXTERNAL_SERIAL
+  while (!Serial8) {
+#else
+  while (!Serial) {
+#endif
+  }
+#endif
+}
+
+void _endSerial()
+{
+#if EXTERNAL_SERIAL
+  Serial8.end();
+#else
+  Serial.end();
 #endif
 }
 
@@ -218,7 +233,6 @@ bool initializeEthernet()
            localPort);
   writeDisplay("Ethernet:", ipStr, 1);
   _writeSerial("Ethernet connected");
-  _writeSerial(ipStr);
   return true;
 }
 
@@ -238,49 +252,43 @@ void generateHardwareUUID()
 
 // -------------------------------------------------------------
 // TFT Display
-// Predefined sections (0-3)
-// Section 0: Mouse Status (line 1)
-// Section 1: Ethernet Status (line 2)
-// Section 2: UUID (line 3)
-// Section 3: Service Status (line 4)
 // -------------------------------------------------------------
-void writeDisplay(const char *header, const char *message, int section)
-{
-  if (section < 0 || section >= STATUS_MAX_LINES)
+void writeDisplay(const char *header, const char *message, int section) {
+  if (section < 0 || section >= 4)
     return;
 
+  // Set text size as needed
   tft.setTextSize(1);
 
-  // Calculate position
+  // Calculate the y position for this section based on predefined constants
   int yPos = STATUS_Y_START + (section * STATUS_LINE_HEIGHT);
 
-  // Clear previous content
-  tft.fillRect(STATUS_X, yPos, STATUS_WIDTH, STATUS_LINE_HEIGHT, ILI9341_BLUE);
+  // Clear the section with a white background
+  tft.fillRect(STATUS_X, yPos, STATUS_WIDTH, STATUS_LINE_HEIGHT, ILI9341_WHITE);
 
+  // Set cursor position and set text color to black (with white background)
   tft.setCursor(STATUS_X, yPos);
-  tft.setTextColor(ILI9341_WHITE, ILI9341_BLUE);
+  tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
 
-  // Fixed header handling with proper string checks
-  if (header && strlen(header) > 0)
-  {
+  // Print header (if provided) followed by a colon and space
+  if (header && strlen(header) > 0) {
     tft.print(header);
     tft.print(": ");
   }
-  if (message)
-  {
+  
+  // Print the message (if provided)
+  if (message) {
     tft.print(message);
   }
 
-  // Debug output with null checks
+#if DEBUG_MODE
+  // Optionally, print debug info to serial output
   char debugStr[128];
-  snprintf(debugStr, sizeof(debugStr), "[Display%d] %s%s\n", section, header ? header : "", message ? message : "");
+  snprintf(debugStr, sizeof(debugStr), "[Display%d] %s%s", section, header ? header : "", message ? message : "");
   _writeSerial(debugStr);
+#endif
 }
 
-void drawFrame()
-{
-  tft.drawRect(FRAME_X, FRAME_Y, FRAME_W, FRAME_H, ILI9341_BLACK);
-}
 
 // -------------------------------------------------------------
 // Storing and Retrieving Mouse Packets
@@ -381,8 +389,8 @@ void handleMouse()
 {
   if (!mouseConnected)
   {
-    writeDisplay("Mouse:", "Connected", 0);
     mouseConnected = true;
+    writeDisplay("Mouse:", "Connected", 0);
   }
   int dx = mouse1.getMouseX();
   int dy = mouse1.getMouseY();
@@ -639,159 +647,159 @@ void processPacket(const uint8_t *data, int size, IPAddress remoteIP, uint16_t r
   }
   switch (cmd)
   {
-  // -------------------------------
-  // Connection Command
-  // -------------------------------
-  case CMD_CONNECT: // cmd_connect
-    handleConnect(header, remoteIP, remotePort);
-    break;
+    // -------------------------------
+    // Connection Command
+    // -------------------------------
+    case CMD_CONNECT: // cmd_connect
+      handleConnect(header, remoteIP, remotePort);
+      break;
 
-  // -------------------------------
-  // Mouse Movement Commands
-  // -------------------------------
-  case CMD_MOUSE_MOVE:
-  { // cmd_mouse_move
-    if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_move_t)))
-    {
-      const mouse_move_t *move = reinterpret_cast<const mouse_move_t *>(data + sizeof(cmd_head_t));
-      int32_t x = ntohl(move->x);
-      int32_t y = ntohl(move->y);
-      processMouseMove(x, y, 0, 0);
-    }
-    sendAckResponse(header, remoteIP, remotePort);
-    break;
-  }
+    // -------------------------------
+    // Mouse Movement Commands
+    // -------------------------------
+    case CMD_MOUSE_MOVE:
+      { // cmd_mouse_move
+        if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_move_t)))
+        {
+          const mouse_move_t *move = reinterpret_cast<const mouse_move_t *>(data + sizeof(cmd_head_t));
+          int32_t x = ntohl(move->x);
+          int32_t y = ntohl(move->y);
+          processMouseMove(x, y, 0, 0);
+        }
+        sendAckResponse(header, remoteIP, remotePort);
+        break;
+      }
 
-  case CMD_AUTO_MOVE:
-  { // cmd_auto_move
-    if (size >= (int)(sizeof(cmd_head_t) + sizeof(auto_move_t)))
-    {
-      const auto_move_t *autoMove = reinterpret_cast<const auto_move_t *>(data + sizeof(cmd_head_t));
-      int32_t x = ntohl(autoMove->x);
-      int32_t y = ntohl(autoMove->y);
-      uint32_t duration = ntohl(autoMove->duration);
-      startAutoMouseMove(x, y, duration);
-    }
-    sendAckResponse(header, remoteIP, remotePort);
-    break;
-  }
+    case CMD_AUTO_MOVE:
+      { // cmd_auto_move
+        if (size >= (int)(sizeof(cmd_head_t) + sizeof(auto_move_t)))
+        {
+          const auto_move_t *autoMove = reinterpret_cast<const auto_move_t *>(data + sizeof(cmd_head_t));
+          int32_t x = ntohl(autoMove->x);
+          int32_t y = ntohl(autoMove->y);
+          uint32_t duration = ntohl(autoMove->duration);
+          startAutoMouseMove(x, y, duration);
+        }
+        sendAckResponse(header, remoteIP, remotePort);
+        break;
+      }
 
-  // -------------------------------
-  // Mouse Button Commands
-  // -------------------------------
-  case CMD_MOUSE_LEFT:
-  { // cmd_mouse_left
-    if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
-    {
-      const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
-      Mouse.set_buttons(btn->state, Mouse.isPressed(MOUSE_RIGHT), Mouse.isPressed(MOUSE_MIDDLE));
-    }
-    sendAckResponse(header, remoteIP, remotePort);
-    break;
-  }
+    // -------------------------------
+    // Mouse Button Commands
+    // -------------------------------
+    case CMD_MOUSE_LEFT:
+      { // cmd_mouse_left
+        if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
+        {
+          const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
+          Mouse.set_buttons(btn->state, Mouse.isPressed(MOUSE_RIGHT), Mouse.isPressed(MOUSE_MIDDLE));
+        }
+        sendAckResponse(header, remoteIP, remotePort);
+        break;
+      }
 
-  case CMD_MOUSE_MIDDLE:
-  { // cmd_mouse_middle
-    if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
-    {
-      const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
-      Mouse.set_buttons(Mouse.isPressed(MOUSE_LEFT), Mouse.isPressed(MOUSE_RIGHT), btn->state);
-    }
-    sendAckResponse(header, remoteIP, remotePort);
-    break;
-  }
+    case CMD_MOUSE_MIDDLE:
+      { // cmd_mouse_middle
+        if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
+        {
+          const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
+          Mouse.set_buttons(Mouse.isPressed(MOUSE_LEFT), Mouse.isPressed(MOUSE_RIGHT), btn->state);
+        }
+        sendAckResponse(header, remoteIP, remotePort);
+        break;
+      }
 
-  case CMD_MOUSE_RIGHT:
-  { // cmd_mouse_right
-    if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
-    {
-      const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
-      Mouse.set_buttons(Mouse.isPressed(MOUSE_LEFT), btn->state, Mouse.isPressed(MOUSE_MIDDLE));
-    }
-    sendAckResponse(header, remoteIP, remotePort);
-    break;
-  }
+    case CMD_MOUSE_RIGHT:
+      { // cmd_mouse_right
+        if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
+        {
+          const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
+          Mouse.set_buttons(Mouse.isPressed(MOUSE_LEFT), btn->state, Mouse.isPressed(MOUSE_MIDDLE));
+        }
+        sendAckResponse(header, remoteIP, remotePort);
+        break;
+      }
 
-  // -------------------------------
-  // Wheel Command
-  // -------------------------------
-  case CMD_MOUSE_WHEEL:
-  { // cmd_mouse_wheel
-    if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_wheel_t)))
-    {
-      const mouse_wheel_t *wheel = reinterpret_cast<const mouse_wheel_t *>(data + sizeof(cmd_head_t));
-      int32_t w = ntohl(wheel->value);
-      Mouse.move(0, 0, w);
-    }
-    sendAckResponse(header, remoteIP, remotePort);
-    break;
-  }
+    // -------------------------------
+    // Wheel Command
+    // -------------------------------
+    case CMD_MOUSE_WHEEL:
+      { // cmd_mouse_wheel
+        if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_wheel_t)))
+        {
+          const mouse_wheel_t *wheel = reinterpret_cast<const mouse_wheel_t *>(data + sizeof(cmd_head_t));
+          int32_t w = ntohl(wheel->value);
+          Mouse.move(0, 0, w);
+        }
+        sendAckResponse(header, remoteIP, remotePort);
+        break;
+      }
 
-  // -------------------------------
-  // Bezier Curve Command
-  // -------------------------------
-  case CMD_BEZIER_MOVE:
-  { // cmd_bazerMove
-    if (size >= (int)(sizeof(cmd_head_t) + sizeof(bezier_move_t)))
-    {
-      const bezier_move_t *bezier = reinterpret_cast<const bezier_move_t *>(data + sizeof(cmd_head_t));
-      int32_t x = ntohl(bezier->targetX);
-      int32_t y = ntohl(bezier->targetY);
-      uint32_t duration = ntohl(bezier->duration);
-      int32_t cx1 = ntohl(bezier->ctrlX1);
-      int32_t cy1 = ntohl(bezier->ctrlY1);
-      int32_t cx2 = ntohl(bezier->ctrlX2);
-      int32_t cy2 = ntohl(bezier->ctrlY2);
-      simulateBezierMouseMove(x, y, duration, cx1, cy1, cx2, cy2);
-    }
-    sendAckResponse(header, remoteIP, remotePort);
-    break;
-  }
+    // -------------------------------
+    // Bezier Curve Command
+    // -------------------------------
+    case CMD_BEZIER_MOVE:
+      { // cmd_bazerMove
+        if (size >= (int)(sizeof(cmd_head_t) + sizeof(bezier_move_t)))
+        {
+          const bezier_move_t *bezier = reinterpret_cast<const bezier_move_t *>(data + sizeof(cmd_head_t));
+          int32_t x = ntohl(bezier->targetX);
+          int32_t y = ntohl(bezier->targetY);
+          uint32_t duration = ntohl(bezier->duration);
+          int32_t cx1 = ntohl(bezier->ctrlX1);
+          int32_t cy1 = ntohl(bezier->ctrlY1);
+          int32_t cx2 = ntohl(bezier->ctrlX2);
+          int32_t cy2 = ntohl(bezier->ctrlY2);
+          simulateBezierMouseMove(x, y, duration, cx1, cy1, cx2, cy2);
+        }
+        sendAckResponse(header, remoteIP, remotePort);
+        break;
+      }
 
-  // -------------------------------
-  // Monitoring & Configuration
-  // -------------------------------
-  case CMD_MONITOR:
-  { // cmd_monitor
-    handleMonitorCommand(data, size, remoteIP, remotePort);
-    sendAckResponse(header, remoteIP, remotePort);
-    break;
-  }
+    // -------------------------------
+    // Monitoring & Configuration
+    // -------------------------------
+    case CMD_MONITOR:
+      { // cmd_monitor
+        handleMonitorCommand(data, size, remoteIP, remotePort);
+        sendAckResponse(header, remoteIP, remotePort);
+        break;
+      }
 
-  case CMD_MASK_MOUSE:
-  { // cmd_mask_mouse
-    handleMaskCommand(data, size);
-    sendAckResponse(header, remoteIP, remotePort);
-    break;
-  }
+    case CMD_MASK_MOUSE:
+      { // cmd_mask_mouse
+        handleMaskCommand(data, size);
+        sendAckResponse(header, remoteIP, remotePort);
+        break;
+      }
 
-  case CMD_UNMASK_ALL: // cmd_unmask_all
-    maskLeftButton = maskRightButton = maskMiddleButton = maskMovement = false;
-    sendAckResponse(header, remoteIP, remotePort);
-    break;
+    case CMD_UNMASK_ALL: // cmd_unmask_all
+      maskLeftButton = maskRightButton = maskMiddleButton = maskMovement = false;
+      sendAckResponse(header, remoteIP, remotePort);
+      break;
 
-  case CMD_SHOW_PIC:
-  { // cmd_showpic (after ntohl())
-    handleLCDImageCommand(data, size);
-    sendAckResponse(header, remoteIP, remotePort);
-    break;
-  }
+    case CMD_SHOW_PIC:
+      { // cmd_showpic (after ntohl())
+        handleLCDImageCommand(data, size);
+        sendAckResponse(header, remoteIP, remotePort);
+        break;
+      }
 
-  // -------------------------------
-  // System Commands
-  // -------------------------------
-  case CMD_REBOOT: // cmd_reboot
-    sendAckResponse(header, remoteIP, remotePort);
-    _softRestart();
-    break;
+    // -------------------------------
+    // System Commands
+    // -------------------------------
+    case CMD_REBOOT: // cmd_reboot
+      sendAckResponse(header, remoteIP, remotePort);
+      _softRestart();
+      break;
 
-  default:
+    default:
 #if NETWORK_DEBUG_MODE
-    char debugStr[64];
-    snprintf(debugStr, sizeof(debugStr), "Unknown command: 0x%08X", (unsigned int)cmd);
-    _writeSerial(debugStr);
+      char debugStr[64];
+      snprintf(debugStr, sizeof(debugStr), "Unknown command: 0x%08X", (unsigned int)cmd);
+      _writeSerial(debugStr);
 #endif
-    break;
+      break;
   }
 }
 
@@ -897,20 +905,14 @@ void setup()
 #if ENABLE_WATCHDOG
   watchdog.enable(Watchdog::TIMEOUT_8S);
 #endif
+  _beginSerial();
   // Initialize TFT Display
+  _writeSerial("setting up display");
   tft.begin();
-  tft.fillScreen(ILI9341_BLUE);
+  _writeSerial("setting color");
+  tft.fillScreen(ILI9341_BLACK);
   tft.setTextWrap(false);
   tft.setRotation(1);
-  // Initialize Touchscreen
-  if (!ts.begin())
-  {
-    _writeSerial("Touchscreen not found");
-  }
-  else
-  {
-    _writeSerial("Touchscreen found");
-  }
   // Initialize USB Host
   myusb.begin();
   _writeSerial("USB Host initialized");
@@ -921,16 +923,7 @@ void setup()
   {
     ethernetConnected = true;
     Udp.begin(localPort);
-    char ipStr[32];
-    snprintf(ipStr, sizeof(ipStr), "%d.%d.%d.%d:%d",
-             Ethernet.localIP()[0], Ethernet.localIP()[1],
-             Ethernet.localIP()[2], Ethernet.localIP()[3],
-             localPort);
-    char portStr[32];
-    snprintf(portStr, sizeof(portStr), ":%d", localPort);
     _writeSerial("Ethernet initialized");
-    _writeSerial(ipStr);
-    _writeSerial(portStr);
   }
   // generate UUID
   generateHardwareUUID();
@@ -943,7 +936,7 @@ void setup()
   _writeSerial("Mouse started");
   writeDisplay("Service", "Offline", 3);
   _writeSerial("Setup complete");
-  pinMode(LED_BUILTIN, OUTPUT);
+  //  pinMode(LED_BUILTIN, OUTPUT);
 }
 // -------------------------------------------------------------
 // 17 loop()
@@ -973,7 +966,6 @@ void loop()
       _writeSerial(debugStr);
     }
 #else
-    // If not debugging, we still empty the buffer:
     MousePacket p;
     while (getNextMousePacket(p))
     {
@@ -990,6 +982,9 @@ void loop()
       if (ethernetConnected)
       {
         writeDisplay("Ethernet:", "Cable Gone", 1);
+#if NETWORK_DEBUG_MODE
+        _writeSerial("cable gone");
+#endif
         ethernetConnected = false;
       }
     }
@@ -998,6 +993,9 @@ void loop()
       if (!ethernetConnected)
       {
         writeDisplay("Ethernet:", "Cable On", 1);
+#if NETWORK_DEBUG_MODE
+        _writeSerial("cable on");
+#endif
         ethernetConnected = true;
       }
     }
@@ -1026,10 +1024,10 @@ void loop()
     while (tail != head)
     {
       processPacket(
-          ethernetBuffer[tail].data,
-          ethernetBuffer[tail].size,
-          ethernetBuffer[tail].remoteIP,
-          ethernetBuffer[tail].remotePort);
+        ethernetBuffer[tail].data,
+        ethernetBuffer[tail].size,
+        ethernetBuffer[tail].remoteIP,
+        ethernetBuffer[tail].remotePort);
       tail = (tail + 1) % N_NET_PACKETS;
     }
   }
@@ -1060,18 +1058,9 @@ void loop()
     lastHeartbeat += 500;
     static bool ledState = false;
     ledState = !ledState;
-    digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
+    //    digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
   }
-  static bool wasTouched = false;
-  bool currentlyTouched = ts.touched();
 
-  if (currentlyTouched && !wasTouched)
-  {
-    overlayEnabled = !overlayEnabled;
-    _writeSerial(overlayEnabled ? "Overlay enabled" : "Overlay disabled");
-    writeDisplay("Service", overlayEnabled ? "Enabled" : "Disabled", 3);
-  }
-  wasTouched = currentlyTouched;
 #if ENABLE_WATCHDOG
   // Watchdog handling
   if (((now - lastActivityTime) <= TIMEOUT_DURATION) && ((now - reset_time) >= RESET_DURATION))
