@@ -17,6 +17,7 @@
 #include <Wire.h>
 #include <ILI9341_t3.h>
 #include <XPT2046_Touchscreen.h>
+#include "usb_desc.h"
 
 void doxygenBanner(int theory);
 
