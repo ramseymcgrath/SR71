@@ -47,3 +47,7 @@ The following steps are geared mainly for the teensy build and assumes your devi
 > You should plug your device into your second PC first and validate that the descriptors look as expected
 - Plug the USB port on your teensy into your gaming PC and connect your overlay pc to the ip and port shown on the device (or in the serial console)
 - Tada!
+
+# Documents
+
+You can find the C documentation [here](/docs/html/annotated.html)

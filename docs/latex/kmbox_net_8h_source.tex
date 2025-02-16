@@ -1,0 +1,138 @@
+\doxysection{kmbox\+Net.\+h}
+\hypertarget{kmbox_net_8h_source}{}\label{kmbox_net_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ cmd\_connect\ 0xaf3c2828}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#define\ cmd\_mouse\_move\ 0xaede7345}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#define\ cmd\_mouse\_left\ 0x9823AE8D}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#define\ cmd\_mouse\_middle\ 0x97a3AE8D}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#define\ cmd\_mouse\_right\ 0x238d8212}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#define\ cmd\_mouse\_wheel\ 0xffeead38}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#define\ cmd\_mouse\_automove\ 0xaede7346}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#define\ cmd\_keyboard\_all\ 0x123c2c2f}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#define\ cmd\_reboot\ 0xaa8855aa}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ cmd\_bazerMove\ 0xa238455a}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ cmd\_monitor\ 0x27388020}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#define\ cmd\_debug\ 0x27382021}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#define\ cmd\_mask\_mouse\ 0x23234343}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#define\ cmd\_unmask\_all\ 0x23344343}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#define\ cmd\_setconfig\ 0x1d3d3323}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#define\ cmd\_showpic\ 0x12334883}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#pragma\ pack(push,\ 1)\ }\textcolor{comment}{//\ Exact\ byte\ alignment}}
+\DoxyCodeLine{00020\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \ \ uint32\_t\ mac;}
+\DoxyCodeLine{00023\ \ \ uint32\_t\ rand;}
+\DoxyCodeLine{00024\ \ \ uint32\_t\ indexpts;}
+\DoxyCodeLine{00025\ \ \ uint32\_t\ cmd;}
+\DoxyCodeLine{00026\ \}\ \mbox{\hyperlink{structcmd__head__t}{cmd\_head\_t}};}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#pragma\ pack(pop)}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ buff[1024];}
+\DoxyCodeLine{00032\ \}\ \mbox{\hyperlink{structcmd__data__t}{cmd\_data\_t}};}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00035\ \{}
+\DoxyCodeLine{00036\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{short}\ buff[512];}
+\DoxyCodeLine{00037\ \}\ \mbox{\hyperlink{structcmd__u16__t}{cmd\_u16\_t}};}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\_\_attribute\_\_((packed))}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ int32\_t\ button;}
+\DoxyCodeLine{00042\ \ \ int32\_t\ x;}
+\DoxyCodeLine{00043\ \ \ int32\_t\ y;}
+\DoxyCodeLine{00044\ \ \ int32\_t\ wheel;}
+\DoxyCodeLine{00045\ \ \ int32\_t\ point[10];}
+\DoxyCodeLine{00046\ \}\ soft\_mouse\_t;}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \ \ \textcolor{keywordtype}{char}\ ctrl;}
+\DoxyCodeLine{00051\ \ \ \textcolor{keywordtype}{char}\ resvel;}
+\DoxyCodeLine{00052\ \ \ \textcolor{keywordtype}{char}\ button[10];}
+\DoxyCodeLine{00053\ \}\ \mbox{\hyperlink{structsoft__keyboard__t}{soft\_keyboard\_t}};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \mbox{\hyperlink{structcmd__head__t}{cmd\_head\_t}}\ head;}
+\DoxyCodeLine{00058\ \ \ \textcolor{keyword}{union}}
+\DoxyCodeLine{00059\ \ \ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \mbox{\hyperlink{structcmd__data__t}{cmd\_data\_t}}\ u8buff;}
+\DoxyCodeLine{00061\ \ \ \ \ \mbox{\hyperlink{structcmd__u16__t}{cmd\_u16\_t}}\ u16buff;}
+\DoxyCodeLine{00062\ \ \ \ \ soft\_mouse\_t\ cmd\_mouse;}
+\DoxyCodeLine{00063\ \ \ \ \ \mbox{\hyperlink{structsoft__keyboard__t}{soft\_keyboard\_t}}\ cmd\_keyboard;}
+\DoxyCodeLine{00064\ \ \ \};}
+\DoxyCodeLine{00065\ \}\ \mbox{\hyperlink{structclient__tx}{client\_tx}};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00068\ \{}
+\DoxyCodeLine{00069\ \ \ err\_creat\_socket\ =\ -\/9000,}
+\DoxyCodeLine{00070\ \ \ err\_net\_version,}
+\DoxyCodeLine{00071\ \ \ err\_net\_tx,}
+\DoxyCodeLine{00072\ \ \ err\_net\_rx\_timeout,}
+\DoxyCodeLine{00073\ \ \ err\_net\_cmd,}
+\DoxyCodeLine{00074\ \ \ err\_net\_pts,}
+\DoxyCodeLine{00075\ \ \ success\ =\ 0,}
+\DoxyCodeLine{00076\ \ \ usb\_dev\_tx\_timeout,}
+\DoxyCodeLine{00077\ \};}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#pragma\ pack(push,\ 1)}}
+\DoxyCodeLine{00080\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00081\ \{}
+\DoxyCodeLine{00082\ \ \ int32\_t\ x;}
+\DoxyCodeLine{00083\ \ \ int32\_t\ y;}
+\DoxyCodeLine{00084\ \}\ \mbox{\hyperlink{structmouse__move__t}{mouse\_move\_t}};}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00087\ \{}
+\DoxyCodeLine{00088\ \ \ int32\_t\ targetX;}
+\DoxyCodeLine{00089\ \ \ int32\_t\ targetY;}
+\DoxyCodeLine{00090\ \ \ int32\_t\ ctrlX1;}
+\DoxyCodeLine{00091\ \ \ int32\_t\ ctrlY1;}
+\DoxyCodeLine{00092\ \ \ int32\_t\ ctrlX2;}
+\DoxyCodeLine{00093\ \ \ int32\_t\ ctrlY2;}
+\DoxyCodeLine{00094\ \ \ uint32\_t\ duration;}
+\DoxyCodeLine{00095\ \}\ \mbox{\hyperlink{structbezier__move__t}{bezier\_move\_t}};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00098\ \{}
+\DoxyCodeLine{00099\ \ \ uint8\_t\ state;}
+\DoxyCodeLine{00100\ \}\ \mbox{\hyperlink{structmouse__button__t}{mouse\_button\_t}};}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00103\ \{}
+\DoxyCodeLine{00104\ \ \ int32\_t\ value;}
+\DoxyCodeLine{00105\ \}\ \mbox{\hyperlink{structmouse__wheel__t}{mouse\_wheel\_t}};}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00108\ \{}
+\DoxyCodeLine{00109\ \ \ int32\_t\ x;}
+\DoxyCodeLine{00110\ \ \ int32\_t\ y;}
+\DoxyCodeLine{00111\ \ \ uint32\_t\ duration;}
+\DoxyCodeLine{00112\ \}\ \mbox{\hyperlink{structauto__move__t}{auto\_move\_t}};}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\#pragma\ pack(pop)}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#pragma\ pack(push,\ 1)\ }\textcolor{comment}{//\ Exact\ byte\ alignment}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{comment}{//\ For\ cmd\_monitor\ (0x27388020)}}
+\DoxyCodeLine{00118\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00119\ \{}
+\DoxyCodeLine{00120\ \ \ uint16\_t\ monitor\_port;\ \textcolor{comment}{//\ 16-\/bit\ port\ in\ network\ byte\ order}}
+\DoxyCodeLine{00121\ \ \ uint16\_t\ padding;\ \ \ \ \ \ \textcolor{comment}{//\ Alignment\ padding\ (not\ used)}}
+\DoxyCodeLine{00122\ \}\ \mbox{\hyperlink{structmonitor__cmd__t}{monitor\_cmd\_t}};}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{comment}{//\ For\ cmd\_mask\_mouse\ (0x23234343)}}
+\DoxyCodeLine{00125\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00126\ \{}
+\DoxyCodeLine{00127\ \ \ int32\_t\ mask\_left;\ \ \ \ \ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ left\ button}}
+\DoxyCodeLine{00128\ \ \ int32\_t\ mask\_right;\ \ \ \ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ right\ button}}
+\DoxyCodeLine{00129\ \ \ int32\_t\ mask\_middle;\ \ \ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ middle\ button}}
+\DoxyCodeLine{00130\ \ \ int32\_t\ mask\_movement;\ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ movement}}
+\DoxyCodeLine{00131\ \}\ \mbox{\hyperlink{structmask__cmd__t}{mask\_cmd\_t}};}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \textcolor{preprocessor}{\#pragma\ pack(pop)}}
+
+\end{DoxyCode}

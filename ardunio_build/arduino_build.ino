@@ -11,6 +11,7 @@
 #include <Wire.h>
 #include <ILI9341_t3.h>
 #include <XPT2046_Touchscreen.h>
+void doxygenBanner( int theory );
 
 // -------------------------------------------------------------
 // Arguments for display
@@ -181,9 +182,11 @@ void _beginSerial()
 #endif
 #if WAIT_FOR_SERIAL
 #if EXTERNAL_SERIAL
-  while (!Serial8) {
+  while (!Serial8)
+  {
 #else
-  while (!Serial) {
+  while (!Serial)
+  {
 #endif
   }
 #endif
@@ -241,6 +244,15 @@ bool initializeEthernet()
 // -------------------------------------------------------------
 char deviceUUID[9] = {0}; // 8 chars + null terminator
 
+/**
+ * @brief Generates a unique hardware UUID for the device.
+ *
+ * This function reads the unique hardware ID from the Teensy's hardware
+ * configuration register and formats it as an 8-character uppercase hexadecimal
+ * string. The generated UUID is stored in the global variable `deviceUUID`.
+ *
+ * @note The hardware ID is read from the first 4 bytes of the HW_OCOTP_CFG0 register.
+ */
 void generateHardwareUUID()
 {
   // Read Teensy's unique hardware ID (4 bytes)
@@ -253,7 +265,23 @@ void generateHardwareUUID()
 // -------------------------------------------------------------
 // TFT Display
 // -------------------------------------------------------------
-void writeDisplay(const char *header, const char *message, int section) {
+/**
+ * @brief Writes a message to a specific section of the display.
+ *
+ * This function clears a section of the display and writes a header and message to it.
+ * The display is divided into sections, and the section to write to is specified by the
+ * `section` parameter.
+ *
+ * @param header The header text to display. If NULL or empty, no header is displayed.
+ * @param message The message text to display. If NULL, no message is displayed.
+ * @param section The section of the display to write to. Must be between 0 and 3 inclusive.
+ *
+ * @note The function does nothing if the `section` parameter is out of range.
+ * @note The text is displayed with a black color on a white background.
+ * @note If DEBUG_MODE is enabled, debug information is printed to the serial output.
+ */
+void writeDisplay(const char *header, const char *message, int section)
+{
   if (section < 0 || section >= 4)
     return;
 
@@ -271,13 +299,15 @@ void writeDisplay(const char *header, const char *message, int section) {
   tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
 
   // Print header (if provided) followed by a colon and space
-  if (header && strlen(header) > 0) {
+  if (header && strlen(header) > 0)
+  {
     tft.print(header);
     tft.print(": ");
   }
-  
+
   // Print the message (if provided)
-  if (message) {
+  if (message)
+  {
     tft.print(message);
   }
 
@@ -288,7 +318,6 @@ void writeDisplay(const char *header, const char *message, int section) {
   _writeSerial(debugStr);
 #endif
 }
-
 
 // -------------------------------------------------------------
 // Storing and Retrieving Mouse Packets
@@ -337,6 +366,19 @@ struct AutoMoveState
 
 static AutoMoveState autoMove;
 
+/**
+ * @brief Starts an automated mouse movement over a specified duration.
+ *
+ * This function initializes the parameters required to move the mouse cursor
+ * from its current position to a target position (x, y) over a given duration
+ * in milliseconds. The movement is broken down into steps to achieve a smooth
+ * transition.
+ *
+ * @param x The target x-coordinate to move the mouse to.
+ * @param y The target y-coordinate to move the mouse to.
+ * @param durationMs The duration over which the mouse should move, in milliseconds.
+ *                   If the duration is less than or equal to 0, it defaults to 10 milliseconds.
+ */
 void startAutoMouseMove(int x, int y, int durationMs)
 {
   if (durationMs <= 0)
@@ -352,6 +394,15 @@ void startAutoMouseMove(int x, int y, int durationMs)
   autoMove.active = true;
 }
 
+/**
+ * @brief Updates the automatic mouse movement.
+ *
+ * This function checks if the automatic mouse movement is active. If it is,
+ * it processes the mouse movement every 10 timer ticks. The function updates
+ * the mouse position by the specified step values and decreases the remaining
+ * distance to move. When the remaining distance in both X and Y directions
+ * reaches zero, the automatic mouse movement is deactivated.
+ */
 void updateAutoMouseMove()
 {
   if (!autoMove.active)
@@ -372,6 +423,15 @@ void updateAutoMouseMove()
 // -------------------------------------------------------------
 // Send Monitor Event (if monitorEnabled is true)
 // -------------------------------------------------------------
+/**
+ * @brief Sends a monitor event to a specified IP and port if monitoring is enabled.
+ *
+ * This function sends a given event string to a monitoring server using UDP.
+ * It first checks if monitoring is enabled, and if so, it sends the event string
+ * to the configured monitor IP and port.
+ *
+ * @param eventString The event string to be sent to the monitoring server.
+ */
 void sendMonitorEvent(const char *eventString)
 {
   if (!monitorEnabled)
@@ -385,6 +445,30 @@ void sendMonitorEvent(const char *eventString)
 // handleMouse(): Reads host mouse (via USB Host) and
 //     forwards to device-side "Mouse" if not masked.
 // -------------------------------------------------------------
+/**
+ * @brief Handles mouse input and updates the system state accordingly.
+ *
+ * This function performs the following tasks:
+ * - Connects the mouse if it is not already connected.
+ * - Retrieves mouse movement (dx, dy), wheel movement (wheel, hwheel), and button states.
+ * - Masks button states if needed.
+ * - Stores the mouse packet for debugging or inspection.
+ * - Sends monitor events if the button state has changed.
+ * - Moves the mouse cursor if movement is not masked and there is a change in movement.
+ * - Updates the device-side button state if it has changed.
+ * - Clears the mouse data buffer.
+ *
+ * @note This function assumes the existence of several global variables and functions:
+ * - mouseConnected: A boolean indicating if the mouse is connected.
+ * - writeDisplay: A function to write messages to a display.
+ * - mouse1: An object representing the mouse, with methods getMouseX(), getMouseY(), getWheel(), getWheelH(), getButtons(), and mouseDataClear().
+ * - maskLeftButton, maskRightButton, maskMiddleButton: Booleans indicating if the respective buttons should be masked.
+ * - storeMousePacket: A function to store the mouse packet data.
+ * - sendMonitorEvent: A function to send monitor events.
+ * - maskMovement: A boolean indicating if mouse movement should be masked.
+ * - Mouse: An object representing the system mouse, with methods move() and set_buttons().
+ * - mouse_buttons_prev: A variable storing the previous button state.
+ */
 void handleMouse()
 {
   if (!mouseConnected)
@@ -624,6 +708,36 @@ enum Command : uint32_t
 };
 
 // ------ network handling
+/**
+ * @brief Processes an incoming network packet and executes the corresponding command.
+ *
+ * @param data Pointer to the packet data.
+ * @param size Size of the packet data.
+ * @param remoteIP IP address of the remote sender.
+ * @param remotePort Port number of the remote sender.
+ *
+ * This function handles various commands received in the packet data. It first checks if the packet size is valid.
+ * Then, it extracts the command and client MAC address from the packet header. Depending on the command, it performs
+ * different actions such as handling mouse movements, button presses, wheel movements, bezier curve movements,
+ * monitoring, masking/unmasking mouse actions, showing pictures, and system reboot.
+ *
+ * Supported commands:
+ * - CMD_CONNECT: Establishes a connection.
+ * - CMD_MOUSE_MOVE: Processes mouse movement.
+ * - CMD_AUTO_MOVE: Starts automatic mouse movement.
+ * - CMD_MOUSE_LEFT: Handles left mouse button press.
+ * - CMD_MOUSE_MIDDLE: Handles middle mouse button press.
+ * - CMD_MOUSE_RIGHT: Handles right mouse button press.
+ * - CMD_MOUSE_WHEEL: Handles mouse wheel movement.
+ * - CMD_BEZIER_MOVE: Simulates bezier curve mouse movement.
+ * - CMD_MONITOR: Handles monitoring command.
+ * - CMD_MASK_MOUSE: Masks mouse actions.
+ * - CMD_UNMASK_ALL: Unmasks all mouse actions.
+ * - CMD_SHOW_PIC: Displays an image on the LCD.
+ * - CMD_REBOOT: Reboots the system.
+ *
+ * If the command is unknown, it logs an error message in debug mode.
+ */
 void processPacket(const uint8_t *data, int size, IPAddress remoteIP, uint16_t remotePort)
 {
   if (size < (int)(sizeof(cmd_head_t)))
@@ -647,165 +761,177 @@ void processPacket(const uint8_t *data, int size, IPAddress remoteIP, uint16_t r
   }
   switch (cmd)
   {
-    // -------------------------------
-    // Connection Command
-    // -------------------------------
-    case CMD_CONNECT: // cmd_connect
-      handleConnect(header, remoteIP, remotePort);
-      break;
+  // -------------------------------
+  // Connection Command
+  // -------------------------------
+  case CMD_CONNECT: // cmd_connect
+    handleConnect(header, remoteIP, remotePort);
+    break;
 
-    // -------------------------------
-    // Mouse Movement Commands
-    // -------------------------------
-    case CMD_MOUSE_MOVE:
-      { // cmd_mouse_move
-        if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_move_t)))
-        {
-          const mouse_move_t *move = reinterpret_cast<const mouse_move_t *>(data + sizeof(cmd_head_t));
-          int32_t x = ntohl(move->x);
-          int32_t y = ntohl(move->y);
-          processMouseMove(x, y, 0, 0);
-        }
-        sendAckResponse(header, remoteIP, remotePort);
-        break;
-      }
+  // -------------------------------
+  // Mouse Movement Commands
+  // -------------------------------
+  case CMD_MOUSE_MOVE:
+  { // cmd_mouse_move
+    if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_move_t)))
+    {
+      const mouse_move_t *move = reinterpret_cast<const mouse_move_t *>(data + sizeof(cmd_head_t));
+      int32_t x = ntohl(move->x);
+      int32_t y = ntohl(move->y);
+      processMouseMove(x, y, 0, 0);
+    }
+    sendAckResponse(header, remoteIP, remotePort);
+    break;
+  }
 
-    case CMD_AUTO_MOVE:
-      { // cmd_auto_move
-        if (size >= (int)(sizeof(cmd_head_t) + sizeof(auto_move_t)))
-        {
-          const auto_move_t *autoMove = reinterpret_cast<const auto_move_t *>(data + sizeof(cmd_head_t));
-          int32_t x = ntohl(autoMove->x);
-          int32_t y = ntohl(autoMove->y);
-          uint32_t duration = ntohl(autoMove->duration);
-          startAutoMouseMove(x, y, duration);
-        }
-        sendAckResponse(header, remoteIP, remotePort);
-        break;
-      }
+  case CMD_AUTO_MOVE:
+  { // cmd_auto_move
+    if (size >= (int)(sizeof(cmd_head_t) + sizeof(auto_move_t)))
+    {
+      const auto_move_t *autoMove = reinterpret_cast<const auto_move_t *>(data + sizeof(cmd_head_t));
+      int32_t x = ntohl(autoMove->x);
+      int32_t y = ntohl(autoMove->y);
+      uint32_t duration = ntohl(autoMove->duration);
+      startAutoMouseMove(x, y, duration);
+    }
+    sendAckResponse(header, remoteIP, remotePort);
+    break;
+  }
 
-    // -------------------------------
-    // Mouse Button Commands
-    // -------------------------------
-    case CMD_MOUSE_LEFT:
-      { // cmd_mouse_left
-        if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
-        {
-          const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
-          Mouse.set_buttons(btn->state, Mouse.isPressed(MOUSE_RIGHT), Mouse.isPressed(MOUSE_MIDDLE));
-        }
-        sendAckResponse(header, remoteIP, remotePort);
-        break;
-      }
+  // -------------------------------
+  // Mouse Button Commands
+  // -------------------------------
+  case CMD_MOUSE_LEFT:
+  { // cmd_mouse_left
+    if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
+    {
+      const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
+      Mouse.set_buttons(btn->state, Mouse.isPressed(MOUSE_RIGHT), Mouse.isPressed(MOUSE_MIDDLE));
+    }
+    sendAckResponse(header, remoteIP, remotePort);
+    break;
+  }
 
-    case CMD_MOUSE_MIDDLE:
-      { // cmd_mouse_middle
-        if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
-        {
-          const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
-          Mouse.set_buttons(Mouse.isPressed(MOUSE_LEFT), Mouse.isPressed(MOUSE_RIGHT), btn->state);
-        }
-        sendAckResponse(header, remoteIP, remotePort);
-        break;
-      }
+  case CMD_MOUSE_MIDDLE:
+  { // cmd_mouse_middle
+    if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
+    {
+      const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
+      Mouse.set_buttons(Mouse.isPressed(MOUSE_LEFT), Mouse.isPressed(MOUSE_RIGHT), btn->state);
+    }
+    sendAckResponse(header, remoteIP, remotePort);
+    break;
+  }
 
-    case CMD_MOUSE_RIGHT:
-      { // cmd_mouse_right
-        if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
-        {
-          const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
-          Mouse.set_buttons(Mouse.isPressed(MOUSE_LEFT), btn->state, Mouse.isPressed(MOUSE_MIDDLE));
-        }
-        sendAckResponse(header, remoteIP, remotePort);
-        break;
-      }
+  case CMD_MOUSE_RIGHT:
+  { // cmd_mouse_right
+    if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_button_t)))
+    {
+      const mouse_button_t *btn = reinterpret_cast<const mouse_button_t *>(data + sizeof(cmd_head_t));
+      Mouse.set_buttons(Mouse.isPressed(MOUSE_LEFT), btn->state, Mouse.isPressed(MOUSE_MIDDLE));
+    }
+    sendAckResponse(header, remoteIP, remotePort);
+    break;
+  }
 
-    // -------------------------------
-    // Wheel Command
-    // -------------------------------
-    case CMD_MOUSE_WHEEL:
-      { // cmd_mouse_wheel
-        if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_wheel_t)))
-        {
-          const mouse_wheel_t *wheel = reinterpret_cast<const mouse_wheel_t *>(data + sizeof(cmd_head_t));
-          int32_t w = ntohl(wheel->value);
-          Mouse.move(0, 0, w);
-        }
-        sendAckResponse(header, remoteIP, remotePort);
-        break;
-      }
+  // -------------------------------
+  // Wheel Command
+  // -------------------------------
+  case CMD_MOUSE_WHEEL:
+  { // cmd_mouse_wheel
+    if (size >= (int)(sizeof(cmd_head_t) + sizeof(mouse_wheel_t)))
+    {
+      const mouse_wheel_t *wheel = reinterpret_cast<const mouse_wheel_t *>(data + sizeof(cmd_head_t));
+      int32_t w = ntohl(wheel->value);
+      Mouse.move(0, 0, w);
+    }
+    sendAckResponse(header, remoteIP, remotePort);
+    break;
+  }
 
-    // -------------------------------
-    // Bezier Curve Command
-    // -------------------------------
-    case CMD_BEZIER_MOVE:
-      { // cmd_bazerMove
-        if (size >= (int)(sizeof(cmd_head_t) + sizeof(bezier_move_t)))
-        {
-          const bezier_move_t *bezier = reinterpret_cast<const bezier_move_t *>(data + sizeof(cmd_head_t));
-          int32_t x = ntohl(bezier->targetX);
-          int32_t y = ntohl(bezier->targetY);
-          uint32_t duration = ntohl(bezier->duration);
-          int32_t cx1 = ntohl(bezier->ctrlX1);
-          int32_t cy1 = ntohl(bezier->ctrlY1);
-          int32_t cx2 = ntohl(bezier->ctrlX2);
-          int32_t cy2 = ntohl(bezier->ctrlY2);
-          simulateBezierMouseMove(x, y, duration, cx1, cy1, cx2, cy2);
-        }
-        sendAckResponse(header, remoteIP, remotePort);
-        break;
-      }
+  // -------------------------------
+  // Bezier Curve Command
+  // -------------------------------
+  case CMD_BEZIER_MOVE:
+  { // cmd_bazerMove
+    if (size >= (int)(sizeof(cmd_head_t) + sizeof(bezier_move_t)))
+    {
+      const bezier_move_t *bezier = reinterpret_cast<const bezier_move_t *>(data + sizeof(cmd_head_t));
+      int32_t x = ntohl(bezier->targetX);
+      int32_t y = ntohl(bezier->targetY);
+      uint32_t duration = ntohl(bezier->duration);
+      int32_t cx1 = ntohl(bezier->ctrlX1);
+      int32_t cy1 = ntohl(bezier->ctrlY1);
+      int32_t cx2 = ntohl(bezier->ctrlX2);
+      int32_t cy2 = ntohl(bezier->ctrlY2);
+      simulateBezierMouseMove(x, y, duration, cx1, cy1, cx2, cy2);
+    }
+    sendAckResponse(header, remoteIP, remotePort);
+    break;
+  }
 
-    // -------------------------------
-    // Monitoring & Configuration
-    // -------------------------------
-    case CMD_MONITOR:
-      { // cmd_monitor
-        handleMonitorCommand(data, size, remoteIP, remotePort);
-        sendAckResponse(header, remoteIP, remotePort);
-        break;
-      }
+  // -------------------------------
+  // Monitoring & Configuration
+  // -------------------------------
+  case CMD_MONITOR:
+  { // cmd_monitor
+    handleMonitorCommand(data, size, remoteIP, remotePort);
+    sendAckResponse(header, remoteIP, remotePort);
+    break;
+  }
 
-    case CMD_MASK_MOUSE:
-      { // cmd_mask_mouse
-        handleMaskCommand(data, size);
-        sendAckResponse(header, remoteIP, remotePort);
-        break;
-      }
+  case CMD_MASK_MOUSE:
+  { // cmd_mask_mouse
+    handleMaskCommand(data, size);
+    sendAckResponse(header, remoteIP, remotePort);
+    break;
+  }
 
-    case CMD_UNMASK_ALL: // cmd_unmask_all
-      maskLeftButton = maskRightButton = maskMiddleButton = maskMovement = false;
-      sendAckResponse(header, remoteIP, remotePort);
-      break;
+  case CMD_UNMASK_ALL: // cmd_unmask_all
+    maskLeftButton = maskRightButton = maskMiddleButton = maskMovement = false;
+    sendAckResponse(header, remoteIP, remotePort);
+    break;
 
-    case CMD_SHOW_PIC:
-      { // cmd_showpic (after ntohl())
-        handleLCDImageCommand(data, size);
-        sendAckResponse(header, remoteIP, remotePort);
-        break;
-      }
+  case CMD_SHOW_PIC:
+  { // cmd_showpic (after ntohl())
+    handleLCDImageCommand(data, size);
+    sendAckResponse(header, remoteIP, remotePort);
+    break;
+  }
 
-    // -------------------------------
-    // System Commands
-    // -------------------------------
-    case CMD_REBOOT: // cmd_reboot
-      sendAckResponse(header, remoteIP, remotePort);
-      _softRestart();
-      break;
+  // -------------------------------
+  // System Commands
+  // -------------------------------
+  case CMD_REBOOT: // cmd_reboot
+    sendAckResponse(header, remoteIP, remotePort);
+    _softRestart();
+    break;
 
-    default:
+  default:
 #if NETWORK_DEBUG_MODE
-      char debugStr[64];
-      snprintf(debugStr, sizeof(debugStr), "Unknown command: 0x%08X", (unsigned int)cmd);
-      _writeSerial(debugStr);
+    char debugStr[64];
+    snprintf(debugStr, sizeof(debugStr), "Unknown command: 0x%08X", (unsigned int)cmd);
+    _writeSerial(debugStr);
 #endif
-      break;
+    break;
   }
 }
 
 //------------------------------
 // Handle connection requests
 //------------------------------
+/**
+ * @brief Handles an incoming connection request.
+ *
+ * This function processes a connection request by comparing the received UUID
+ * with the device's UUID. If they match, it sets the monitor IP and port and
+ * sends an acknowledgment response. If they do not match, it still sends an
+ * acknowledgment response but does not update the monitor IP and port.
+ *
+ * @param header Pointer to the command header containing the MAC address.
+ * @param remoteIP The IP address of the remote client.
+ * @param remotePort The port number of the remote client.
+ */
 void handleConnect(const cmd_head_t *header, IPAddress remoteIP, uint16_t remotePort)
 {
   char receivedUUID[9];
@@ -832,6 +958,17 @@ void handleConnect(const cmd_head_t *header, IPAddress remoteIP, uint16_t remote
 //------------------------------
 // Echo original request
 //------------------------------
+/**
+ * @brief Sends an acknowledgment response to a remote IP and port.
+ *
+ * This function constructs a response packet based on the provided command header,
+ * sets the response fields, and sends the packet to the specified remote IP address
+ * and port using UDP.
+ *
+ * @param header Pointer to the command header containing the original command details.
+ * @param remoteIP The IP address of the remote device to send the response to.
+ * @param remotePort The port number of the remote device to send the response to.
+ */
 void sendAckResponse(const cmd_head_t *header, IPAddress remoteIP, uint16_t remotePort)
 {
   cmd_head_t resp;
@@ -847,6 +984,18 @@ void sendAckResponse(const cmd_head_t *header, IPAddress remoteIP, uint16_t remo
 //------------------------------
 // Handle monitor requests
 //------------------------------
+/**
+ * @brief Handles the monitor command received over the network.
+ *
+ * This function processes the incoming monitor command, validates the packet size,
+ * extracts the monitor command data, and enables monitoring with the provided
+ * IP address and port.
+ *
+ * @param data Pointer to the received data buffer.
+ * @param size Size of the received data buffer.
+ * @param remoteIP IP address of the sender.
+ * @param remotePort Port number of the sender.
+ */
 void handleMonitorCommand(const uint8_t *data, int size, IPAddress remoteIP, uint16_t remotePort)
 {
   if (size < (int)(sizeof(cmd_head_t) + sizeof(monitor_cmd_t)))
@@ -870,6 +1019,33 @@ void handleMonitorCommand(const uint8_t *data, int size, IPAddress remoteIP, uin
 #endif
 }
 
+/**
+ * @brief Handles the mask command received from the network.
+ *
+ * This function processes a mask command by interpreting the data received
+ * over the network. It checks if the packet size is sufficient, extracts the
+ * mask command data, and updates the mask button states accordingly.
+ *
+ * @param data Pointer to the received data buffer.
+ * @param size Size of the received data buffer.
+ *
+ * The function expects the data buffer to contain a command header followed
+ * by the mask command data. The mask command data is interpreted in network
+ * byte order and converted to host byte order before updating the mask button
+ * states.
+ *
+ * If the packet size is too small, the function logs an error message (if
+ * NETWORK_DEBUG_MODE is enabled) and returns without processing the data.
+ *
+ * The mask button states are updated as follows:
+ * - maskLeftButton: State of the left mask button.
+ * - maskRightButton: State of the right mask button.
+ * - maskMiddleButton: State of the middle mask button.
+ * - maskMovement: State of the mask movement.
+ *
+ * If NETWORK_DEBUG_MODE is enabled, the function logs the updated mask button
+ * states to the serial output.
+ */
 void handleMaskCommand(const uint8_t *data, int size)
 {
   if (size < (int)(sizeof(cmd_head_t) + sizeof(mask_cmd_t)))
@@ -1024,10 +1200,10 @@ void loop()
     while (tail != head)
     {
       processPacket(
-        ethernetBuffer[tail].data,
-        ethernetBuffer[tail].size,
-        ethernetBuffer[tail].remoteIP,
-        ethernetBuffer[tail].remotePort);
+          ethernetBuffer[tail].data,
+          ethernetBuffer[tail].size,
+          ethernetBuffer[tail].remoteIP,
+          ethernetBuffer[tail].remotePort);
       tail = (tail + 1) % N_NET_PACKETS;
     }
   }
