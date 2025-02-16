@@ -118,16 +118,15 @@ typedef struct
 typedef struct
 {
   uint16_t monitor_port; // 16-bit port in network byte order
-  uint16_t padding;      // Alignment padding (not used)
 } monitor_cmd_t;
 
 // For cmd_mask_mouse (0x23234343)
 typedef struct
 {
   int32_t mask_left;     // Non-zero to mask left button
-  int32_t mask_right;    // Non-zero to mask right button
-  int32_t mask_middle;   // Non-zero to mask middle button
-  int32_t mask_movement; // Non-zero to mask movement
-} mask_cmd_t;
-
+  int32_t mask_left;     // Non-zero to mask the left button
+  int32_t mask_right;    // Non-zero to mask the right button
+  int32_t mask_middle;   // Non-zero to mask the middle button
+  int32_t mask_movement; // Non-zero to mask the movement
+}
 #pragma pack(pop)

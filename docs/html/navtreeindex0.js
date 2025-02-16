@@ -12,10 +12,9 @@ var NAVTREEINDEX0 =
 "structcmd__data__t.html":[0,0,3],
 "structcmd__head__t.html":[0,0,4],
 "structcmd__u16__t.html":[0,0,5],
-"structmask__cmd__t.html":[0,0,6],
-"structmonitor__cmd__t.html":[0,0,7],
-"structmouse__button__t.html":[0,0,8],
-"structmouse__move__t.html":[0,0,9],
-"structmouse__wheel__t.html":[0,0,10],
-"structsoft__keyboard__t.html":[0,0,11]
+"structmonitor__cmd__t.html":[0,0,6],
+"structmouse__button__t.html":[0,0,7],
+"structmouse__move__t.html":[0,0,8],
+"structmouse__wheel__t.html":[0,0,9],
+"structsoft__keyboard__t.html":[0,0,10]
 };

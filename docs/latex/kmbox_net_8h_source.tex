@@ -121,18 +121,17 @@
 \DoxyCodeLine{00118\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
 \DoxyCodeLine{00119\ \{}
 \DoxyCodeLine{00120\ \ \ uint16\_t\ monitor\_port;\ \textcolor{comment}{//\ 16-\/bit\ port\ in\ network\ byte\ order}}
-\DoxyCodeLine{00121\ \ \ uint16\_t\ padding;\ \ \ \ \ \ \textcolor{comment}{//\ Alignment\ padding\ (not\ used)}}
-\DoxyCodeLine{00122\ \}\ \mbox{\hyperlink{structmonitor__cmd__t}{monitor\_cmd\_t}};}
-\DoxyCodeLine{00123\ }
-\DoxyCodeLine{00124\ \textcolor{comment}{//\ For\ cmd\_mask\_mouse\ (0x23234343)}}
-\DoxyCodeLine{00125\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
-\DoxyCodeLine{00126\ \{}
-\DoxyCodeLine{00127\ \ \ int32\_t\ mask\_left;\ \ \ \ \ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ left\ button}}
-\DoxyCodeLine{00128\ \ \ int32\_t\ mask\_right;\ \ \ \ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ right\ button}}
-\DoxyCodeLine{00129\ \ \ int32\_t\ mask\_middle;\ \ \ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ middle\ button}}
-\DoxyCodeLine{00130\ \ \ int32\_t\ mask\_movement;\ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ movement}}
-\DoxyCodeLine{00131\ \}\ \mbox{\hyperlink{structmask__cmd__t}{mask\_cmd\_t}};}
-\DoxyCodeLine{00132\ }
-\DoxyCodeLine{00133\ \textcolor{preprocessor}{\#pragma\ pack(pop)}}
+\DoxyCodeLine{00121\ \}\ \mbox{\hyperlink{structmonitor__cmd__t}{monitor\_cmd\_t}};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ For\ cmd\_mask\_mouse\ (0x23234343)}}
+\DoxyCodeLine{00124\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00125\ \{}
+\DoxyCodeLine{00126\ \ \ int32\_t\ mask\_left;\ \ \ \ \ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ left\ button}}
+\DoxyCodeLine{00127\ \ \ int32\_t\ mask\_left;\ \ \ \ \ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ the\ left\ button}}
+\DoxyCodeLine{00128\ \ \ int32\_t\ mask\_right;\ \ \ \ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ the\ right\ button}}
+\DoxyCodeLine{00129\ \ \ int32\_t\ mask\_middle;\ \ \ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ the\ middle\ button}}
+\DoxyCodeLine{00130\ \ \ int32\_t\ mask\_movement;\ \textcolor{comment}{//\ Non-\/zero\ to\ mask\ the\ movement}}
+\DoxyCodeLine{00131\ \}}
+\DoxyCodeLine{00132\ \textcolor{preprocessor}{\#pragma\ pack(pop)}}
 
 \end{DoxyCode}

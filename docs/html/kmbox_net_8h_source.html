@@ -246,29 +246,25 @@ $(function(){initNavTree('kmbox_net_8h_source.html',''); initResizable(true); })
 <div class="line"><a id="l00118" name="l00118"></a><span class="lineno"><a class="line" href="structmonitor__cmd__t.html">  118</a></span><span class="keyword">typedef</span> <span class="keyword">struct</span></div>
 <div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>{</div>
 <div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>  uint16_t monitor_port; <span class="comment">// 16-bit port in network byte order</span></div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>  uint16_t padding;      <span class="comment">// Alignment padding (not used)</span></div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>} <a class="code hl_struct" href="structmonitor__cmd__t.html">monitor_cmd_t</a>;</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>} <a class="code hl_struct" href="structmonitor__cmd__t.html">monitor_cmd_t</a>;</div>
 </div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="comment">// For cmd_mask_mouse (0x23234343)</span></div>
-<div class="foldopen" id="foldopen00125" data-start="{" data-end="};">
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno"><a class="line" href="structmask__cmd__t.html">  125</a></span><span class="keyword">typedef</span> <span class="keyword">struct</span></div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>{</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>  int32_t mask_left;     <span class="comment">// Non-zero to mask left button</span></div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>  int32_t mask_right;    <span class="comment">// Non-zero to mask right button</span></div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>  int32_t mask_middle;   <span class="comment">// Non-zero to mask middle button</span></div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>  int32_t mask_movement; <span class="comment">// Non-zero to mask movement</span></div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>} <a class="code hl_struct" href="structmask__cmd__t.html">mask_cmd_t</a>;</div>
-</div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span><span class="preprocessor">#pragma pack(pop)</span></div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span> </div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span><span class="comment">// For cmd_mask_mouse (0x23234343)</span></div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="keyword">typedef</span> <span class="keyword">struct</span></div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>{</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>  int32_t mask_left;     <span class="comment">// Non-zero to mask left button</span></div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>  int32_t mask_left;     <span class="comment">// Non-zero to mask the left button</span></div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>  int32_t mask_right;    <span class="comment">// Non-zero to mask the right button</span></div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>  int32_t mask_middle;   <span class="comment">// Non-zero to mask the middle button</span></div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>  int32_t mask_movement; <span class="comment">// Non-zero to mask the movement</span></div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>}</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span><span class="preprocessor">#pragma pack(pop)</span></div>
 <div class="ttc" id="astructauto__move__t_html"><div class="ttname"><a href="structauto__move__t.html">auto_move_t</a></div><div class="ttdef"><b>Definition</b> kmboxNet.h:108</div></div>
 <div class="ttc" id="astructbezier__move__t_html"><div class="ttname"><a href="structbezier__move__t.html">bezier_move_t</a></div><div class="ttdef"><b>Definition</b> kmboxNet.h:87</div></div>
 <div class="ttc" id="astructclient__tx_html"><div class="ttname"><a href="structclient__tx.html">client_tx</a></div><div class="ttdef"><b>Definition</b> kmboxNet.h:56</div></div>
 <div class="ttc" id="astructcmd__data__t_html"><div class="ttname"><a href="structcmd__data__t.html">cmd_data_t</a></div><div class="ttdef"><b>Definition</b> kmboxNet.h:30</div></div>
 <div class="ttc" id="astructcmd__head__t_html"><div class="ttname"><a href="structcmd__head__t.html">cmd_head_t</a></div><div class="ttdef"><b>Definition</b> kmboxNet.h:21</div></div>
 <div class="ttc" id="astructcmd__u16__t_html"><div class="ttname"><a href="structcmd__u16__t.html">cmd_u16_t</a></div><div class="ttdef"><b>Definition</b> kmboxNet.h:35</div></div>
-<div class="ttc" id="astructmask__cmd__t_html"><div class="ttname"><a href="structmask__cmd__t.html">mask_cmd_t</a></div><div class="ttdef"><b>Definition</b> kmboxNet.h:126</div></div>
 <div class="ttc" id="astructmonitor__cmd__t_html"><div class="ttname"><a href="structmonitor__cmd__t.html">monitor_cmd_t</a></div><div class="ttdef"><b>Definition</b> kmboxNet.h:119</div></div>
 <div class="ttc" id="astructmouse__button__t_html"><div class="ttname"><a href="structmouse__button__t.html">mouse_button_t</a></div><div class="ttdef"><b>Definition</b> kmboxNet.h:98</div></div>
 <div class="ttc" id="astructmouse__move__t_html"><div class="ttname"><a href="structmouse__move__t.html">mouse_move_t</a></div><div class="ttdef"><b>Definition</b> kmboxNet.h:81</div></div>
