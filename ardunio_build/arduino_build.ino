@@ -9,36 +9,25 @@
 // -------------------------------------------------------------
 #include <NativeEthernet.h>
 #include <NativeEthernetUdp.h>
+#include "usb_desc.h"
 #include "kmboxNet.h"   // Assumed to include definitions like cmd_head_t etc.
 #include <Watchdog.h>
 #include <USBHost_t36.h>
 #include <Mouse.h>
 #include <SPI.h>
 #include <Wire.h>
-#include <ILI9341_t3.h>
-#include <XPT2046_Touchscreen.h>
-#include "usb_desc.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 void doxygenBanner(int theory);
 
 // -------------------------------------------------------------
-// TFT & Touchscreen Setup
+// OLED Display Setup
 // -------------------------------------------------------------
-#define TFT_MISO 12
-#define TFT_SCK 13
-#define TFT_MOSI 11
-#define TFT_DC 9
-#define TFT_CS 10
-#define TFT_RST 255
-ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC, TFT_RST, TFT_MOSI, TFT_SCK, TFT_MISO);
-
-#define TS_MINX 150
-#define TS_MINY 130
-#define TS_MAXX 3800
-#define TS_MAXY 4000
-#define TS_CS 8
-#define TS_IRQ 41
-XPT2046_Touchscreen ts(TS_CS, TS_IRQ);
+#define SCREEN_WIDTH  128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET    -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // -------------------------------------------------------------
 // Button Layout
@@ -301,47 +290,26 @@ void generateHardwareUUID() {
 }
 
 // -------------------------------------------------------------
-// TFT Display Functions
+// OLED Display Helper
 // -------------------------------------------------------------
+#define NUM_DISPLAY_SECTIONS 4
+static char prevDisplay[NUM_DISPLAY_SECTIONS][64] = {{0}};
+
 void writeDisplay(const char *header, const char *message, int section) {
-  if (section < 0 || section >= STATUS_MAX_LINES)
-    return;
-
-  tft.setTextSize(1);
-  int yPos = STATUS_Y_START + (section * STATUS_LINE_HEIGHT);
-  tft.fillRect(STATUS_X, yPos, STATUS_WIDTH, STATUS_LINE_HEIGHT, ILI9341_WHITE);
-  tft.setCursor(STATUS_X, yPos);
-  tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-
-  if (header && strlen(header) > 0) {
-    tft.print(header);
-    tft.print(": ");
+  char newDisplay[64];
+  snprintf(newDisplay, sizeof(newDisplay), "%s %s", header, message);
+  if (strcmp(newDisplay, prevDisplay[section]) == 0) {
+    return; // no change
   }
-  if (message) {
-    tft.print(message);
-  }
+  strncpy(prevDisplay[section], newDisplay, sizeof(prevDisplay[section]));
 
-#if DEBUG_MODE
-  char debugStr[128];
-  snprintf(debugStr, sizeof(debugStr), "[Display%d] %s%s", section, header ? header : "", message ? message : "");
-  _writeSerial(debugStr);
-#endif
-}
-
-void drawNetworkButton() {
-  tft.fillRect(BTN_OFF_X, BTN_OFF_Y, BTN_OFF_W, BTN_OFF_H, ILI9341_WHITE);
-  tft.drawRect(BTN_OFF_X, BTN_OFF_Y, BTN_OFF_W, BTN_OFF_H, ILI9341_BLACK);
-  tft.setCursor(BTN_OFF_X + 5, BTN_OFF_Y + BTN_OFF_H / 2 - 4);
-  tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-  tft.print(networkEnabled ? "Disable Net" : "Enable Net");
-}
-
-void drawResetButton() {
-  tft.fillRect(BTN_RESET_X, BTN_RESET_Y, BTN_RESET_W, BTN_RESET_H, ILI9341_WHITE);
-  tft.drawRect(BTN_RESET_X, BTN_RESET_Y, BTN_RESET_W, BTN_RESET_H, ILI9341_BLACK);
-  tft.setCursor(BTN_RESET_X + 5, BTN_RESET_Y + BTN_RESET_H / 2 - 4);
-  tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-  tft.print("Reset");
+  int y = section * 16;
+  display.fillRect(0, y, SCREEN_WIDTH, 16, SSD1306_BLACK);
+  display.setCursor(0, y);
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.print(newDisplay);
+  display.display();
 }
 
 // -------------------------------------------------------------
@@ -402,72 +370,50 @@ void sendMonitorEvent(const char *eventString) {
 // -------------------------------------------------------------
 // Mouse Handling (USB Host -> Device)
 // -------------------------------------------------------------
-enum MouseState { INIT, CONNECTED, PROCESS, CLEAR };
-static MouseState state = INIT;
-
 void handleMouse() {
-  static int dx, dy, wheel, hwheel;
-  static uint8_t btns, oldButtons = 0;
+  myusb.Task(); // Refresh USB data
 
-  switch (state) {
-    case INIT:
-      if (!mouseConnected) {
-        mouseConnected = true;
-        writeDisplay("Mouse:", "Connected", 0);
-      }
-      state = CONNECTED;
-      break;
+  // Read current button states
+  uint8_t btns = mouse1.getButtons();
 
-    case CONNECTED:
-      dx = mouse1.getMouseX();
-      dy = mouse1.getMouseY();
-      wheel = mouse1.getWheel();
-      hwheel = mouse1.getWheelH();
-      btns = mouse1.getButtons();
+  // Apply masking (existing code)
+  if (maskLeftButton)   btns &= ~0x01;
+  if (maskRightButton)  btns &= ~0x04; // Note: Swapped bits from earlier fix
+  if (maskMiddleButton) btns &= ~0x02;
 
-      // Mask buttons if needed
-      if (maskLeftButton)
-        btns &= ~0x01;
-      if (maskRightButton)
-        btns &= ~0x02;
-      if (maskMiddleButton)
-        btns &= ~0x04;
-
-      storeMousePacket(dx, dy, wheel, hwheel, btns);
-      state = PROCESS;
-      break;
-
-    case PROCESS: {
-        uint8_t changed = btns ^ oldButtons;
-        if (changed & 0x01)
-          sendMonitorEvent((btns & 0x01) ? "MOUSE_LEFT_PRESS" : "MOUSE_LEFT_RELEASE");
-        if (changed & 0x02)
-          sendMonitorEvent((btns & 0x02) ? "MOUSE_MIDDLE_PRESS" : "MOUSE_MIDDLE_RELEASE");
-        if (changed & 0x04)
-          sendMonitorEvent((btns & 0x04) ? "MOUSE_RIGHT_PRESS" : "MOUSE_RIGHT_RELEASE");
-        oldButtons = btns;
-
-        if (!maskMovement) {
-          static int prevDx = 0, prevDy = 0, prevWheel = 0, prevHwheel = 0;
-          if (dx != prevDx || dy != prevDy || wheel != prevWheel || hwheel != prevHwheel) {
-            Mouse.move(dx, dy, wheel, hwheel);
-            prevDx = dx; prevDy = dy; prevWheel = wheel; prevHwheel = hwheel;
-          }
-        }
-        if (btns != mouse_buttons_prev) {
-          Mouse.set_buttons((btns & 1), (btns & 2), (btns & 4), (btns & 8), (btns & 16));
-          mouse_buttons_prev = btns;
-        }
-        state = CLEAR;
-        break;
-      }
-    case CLEAR:
-      mouse1.mouseDataClear();
-      state = INIT;
-      break;
+  // Process button changes IMMEDIATELY
+  if (btns != mouse_buttons_prev) {
+    // Corrected button mapping (right/middle swapped)
+    Mouse.set_buttons(
+      (btns & 1),   // Left
+      (btns & 4),   // Right (bit 2)
+      (btns & 2),   // Middle (bit 1)
+      (btns & 8),   // Back
+      (btns & 16)    // Forward
+    );
+    if (monitorEnabled) {
+      uint8_t changed = btns ^ mouse_buttons_prev;
+      if (changed & 0x01) sendMonitorEvent((btns & 0x01) ? "MOUSE_LEFT_PRESS" : "MOUSE_LEFT_RELEASE");
+      if (changed & 0x04) sendMonitorEvent((btns & 0x04) ? "MOUSE_RIGHT_PRESS" : "MOUSE_RIGHT_RELEASE");
+      if (changed & 0x02) sendMonitorEvent((btns & 0x02) ? "MOUSE_MIDDLE_PRESS" : "MOUSE_MIDDLE_RELEASE");
+      if (changed & 0x08) sendMonitorEvent((btns & 0x08) ? "MOUSE_BACK_PRESS" : "MOUSE_BACK_RELEASE");
+      if (changed & 0x16) sendMonitorEvent((btns & 0x16) ? "MOUSE_FORWARD_PRESS" : "MOUSE_FORWARD_RELEASE");
+    }
+    mouse_buttons_prev = btns;
   }
-}
 
+  // Handle movement (buffered)
+  int dx = mouse1.getMouseX();
+  int dy = mouse1.getMouseY();
+  int wheel = mouse1.getWheel();
+  int hwheel = mouse1.getWheelH();
+
+  if (dx != 0 || dy != 0 || wheel != 0 || hwheel != 0) {
+    storeMousePacket(dx, dy, wheel, hwheel, btns);
+  }
+
+  mouse1.mouseDataClear(); // Clear USB host buffer
+}
 // -------------------------------------------------------------
 // Non-blocking Mouse Movement State
 // -------------------------------------------------------------
@@ -793,19 +739,14 @@ void handleMaskCommand(const uint8_t *data, int size) {
 void handleEthernetInitialization() {
   static uint32_t lastEthernetCheck = 0;
   uint32_t now = millis();
-#if ENABLE_WATCHDOG
-  static uint32_t lastWatchdogReset = 0;
-  if (now - lastWatchdogReset >= RESET_DURATION) {
-    lastWatchdogReset = now;
-    if ((now - lastActivityTime) <= TIMEOUT_DURATION)
-      watchdog.reset();
-  }
-#endif
+  const uint32_t interval = 500; // toggle interval in milliseconds
   if (!ethernetInitialized) {
-    ethernetInitialized = initializeEthernet();
-    if (ethernetInitialized) {
-      ethernetConnected = true;
-      Udp.begin(localPort);
+    if (now - lastEthernetCheck >= interval) {
+      ethernetInitialized = initializeEthernet();
+      if (ethernetInitialized) {
+        ethernetConnected = true;
+        Udp.begin(localPort);
+      }
     }
   }
 }
@@ -814,12 +755,13 @@ void handleEthernetInitialization() {
 // Heartbeat LED
 // -------------------------------------------------------------
 void handleHeartbeatLED() {
+  uint32_t now = millis();
   static uint32_t lastToggleTime = 0;
   static bool ledState = false;
   const uint32_t interval = 500; // toggle interval in milliseconds
 
-  if (millis() - lastToggleTime >= interval) {
-    lastToggleTime = millis();
+  if (now - lastToggleTime >= interval) {
+    lastToggleTime = now;
     ledState = !ledState;
     digitalWrite(HEARTBEAT_LED_PIN, ledState ? HIGH : LOW);
   }
@@ -829,6 +771,7 @@ void handleHeartbeatLED() {
 // setup()
 // -------------------------------------------------------------
 void setup() {
+  uint32_t now = millis();
   // Initialize watchdog if enabled
 #if ENABLE_WATCHDOG
   watchdog.enable(Watchdog::TIMEOUT_8S);
@@ -836,15 +779,23 @@ void setup() {
   pinMode(HEARTBEAT_LED_PIN, OUTPUT);
   _beginSerial();
   _writeSerial("Setting up display...");
-  tft.begin();
-  tft.fillScreen(ILI9341_BLACK);
-  tft.setTextWrap(false);
-  tft.setRotation(1);
-  _writeSerial("Setting up touchscreen...");
-  ts.begin();
-  ts.setRotation(1);
-  drawNetworkButton();
-  drawResetButton();
+  // Initialize the OLED
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+#if EXTERNAL_SERIAL
+    Serial1.println("SSD1306 allocation failed");
+#else
+    Serial.println("SSD1306 allocation failed");
+#endif
+    while (true) {
+      /* hang */
+    }
+  }
+
+  display.clearDisplay();
+  display.display();
+  delay(500);
+  writeDisplay("Log:", "Display OK", 0);
   myusb.begin();
   _writeSerial("USB Host initialized");
   writeDisplay("Mouse:", "Disconnected", 0);
@@ -858,8 +809,8 @@ void setup() {
   Mouse.begin();
   _writeSerial("Mouse started");
   writeDisplay("Service", "Offline", 3);
-  lastActivityTime = millis();
-  reset_time = millis();
+  lastActivityTime = now;
+  reset_time = now;
   _writeSerial("Setup complete");
 }
 
@@ -868,7 +819,11 @@ void setup() {
 // -------------------------------------------------------------
 void loop() {
   uint32_t now = millis();
-  myusb.Task();
+  static uint32_t lastUSBCheck = 0;
+  if (now - lastUSBCheck >= 1) { // Check USB every 1ms to prevent over polling
+    lastUSBCheck = now;
+    myusb.Task();
+  }
   handleMouse();
   updateAutoMouseMove();
   updateMouseMovementState();
@@ -942,50 +897,6 @@ void loop() {
     }
   } else {
     handleEthernetInitialization();
-  }
-  TS_Point p = ts.getPoint();
-  if (p.z > MIN_PRESSURE && p.z < MAX_PRESSURE) {
-#if DEBUG_MODE
-    _writeSerial("got touched");
-#endif
-    // Process network toggle button touch
-    if (p.x >= BTN_OFF_X && p.x <= (BTN_OFF_X + BTN_OFF_W) &&
-        p.y >= BTN_OFF_Y && p.y <= (BTN_OFF_Y + BTN_OFF_H)) {
-      if (!networkButtonPressed) {  // debounce the button
-#if DEBUG_MODE
-        _writeSerial("restart button");
-#endif
-        networkEnabled = !networkEnabled;
-        if (networkEnabled) {
-          ethernetInitialized = initializeEthernet();
-          if (ethernetInitialized) {
-            ethernetConnected = true;
-            Udp.begin(localPort);
-          }
-          writeDisplay("Ethernet", "Enabled", 0);
-        } else {
-          writeDisplay("Ethernet", "Disabled", 0);
-        }
-        drawNetworkButton();  // redraw to reflect the new state
-        networkButtonPressed = true;
-      }
-    } else {
-      networkButtonPressed = false;
-    }
-
-    // Process reset button touch
-    if (p.x >= BTN_RESET_X && p.x <= (BTN_RESET_X + BTN_RESET_W) &&
-        p.y >= BTN_RESET_Y && p.y <= (BTN_RESET_Y + BTN_RESET_H)) {
-      if (!resetButtonPressed) {  // debounce the reset button
-#if DEBUG_MODE
-        _writeSerial("reset button");
-#endif
-        writeDisplay("Service", "Resetting", 3);
-        delay(100);  // Allow the message to be seen briefly
-        _softRestart();  // Call your soft restart function
-        resetButtonPressed = true;
-      }
-    }
   }
   handleHeartbeatLED();
 
