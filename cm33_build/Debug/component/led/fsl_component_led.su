@@ -1,0 +1,13 @@
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_common_arm.h:897:24:DisableGlobalIRQ	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_common_arm.h:923:20:EnableGlobalIRQ	24	static
+../component/led/fsl_component_led.c:140:21:LED_SetStatus	40	static
+../component/led/fsl_component_led.c:199:13:LED_TimerEvent	32	static
+../component/led/fsl_component_led.c:335:14:LED_Init	40	static
+../component/led/fsl_component_led.c:476:14:LED_Deinit	32	static
+../component/led/fsl_component_led.c:557:14:LED_TurnOnOff	24	static
+../component/led/fsl_component_led.c:570:14:LED_SetColor	24	static
+../component/led/fsl_component_led.c:588:14:LED_Flash	24	static
+../component/led/fsl_component_led.c:628:14:LED_Blip	24	static
+../component/led/fsl_component_led.c:639:14:LED_Dimming	16	static
+../component/led/fsl_component_led.c:729:14:LED_EnterLowpower	16	static
+../component/led/fsl_component_led.c:768:14:LED_ExitLowpower	16	static

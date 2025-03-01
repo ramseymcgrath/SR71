@@ -1,0 +1,12 @@
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/CMSIS/core_cm33.h:2555:22:__NVIC_SetPriority	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/CMSIS/core_cm33.h:3108:26:SysTick_Config	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_common_arm.h:897:24:DisableGlobalIRQ	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_common_arm.h:923:20:EnableGlobalIRQ	24	static
+../lwip/port/sys_arch/dynamic/sys_arch.c:73:6:sys_assert	16	static
+../lwip/port/sys_arch/dynamic/sys_arch.c:92:7:lwip_rand	4	static
+../lwip/port/sys_arch/dynamic/sys_arch.c:710:6:time_isr	4	static
+../lwip/port/sys_arch/dynamic/sys_arch.c:718:6:time_init	32	static
+../lwip/port/sys_arch/dynamic/sys_arch.c:738:7:sys_now	4	static
+../lwip/port/sys_arch/dynamic/sys_arch.c:762:12:sys_arch_protect	16	static
+../lwip/port/sys_arch/dynamic/sys_arch.c:782:6:sys_arch_unprotect	16	static
+../lwip/port/sys_arch/dynamic/sys_arch.c:787:6:sys_check_core_locking	16	static

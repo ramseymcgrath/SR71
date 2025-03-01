@@ -1,0 +1,8 @@
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_gpio.h:345:20:GPIO_PinWrite	24	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_gpio.h:374:20:GPIO_PortSet	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_gpio.h:389:20:GPIO_PortClear	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_gpio.h:404:20:GPIO_PortToggle	16	static
+../source/board_led.c:12:6:BOARD_LED_Init	8	static
+../source/board_led.c:20:6:BOARD_LED_Toggle	8	static
+../source/board_led.c:26:6:BOARD_LED_On	8	static
+../source/board_led.c:31:6:BOARD_LED_Off	8	static

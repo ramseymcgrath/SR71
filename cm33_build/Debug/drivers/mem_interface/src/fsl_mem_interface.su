@@ -1,0 +1,13 @@
+../drivers/mem_interface/src/fsl_mem_interface.c:66:20:API_Version	4	static
+../drivers/mem_interface/src/fsl_mem_interface.c:73:10:API_Init	16	static
+../drivers/mem_interface/src/fsl_mem_interface.c:80:10:API_Deinit	16	static
+../drivers/mem_interface/src/fsl_mem_interface.c:87:10:MEM_Init	16	static
+../drivers/mem_interface/src/fsl_mem_interface.c:94:10:MEM_Write	40	static
+../drivers/mem_interface/src/fsl_mem_interface.c:102:10:MEM_Fill	40	static
+../drivers/mem_interface/src/fsl_mem_interface.c:110:10:MEM_Erase	32	static
+../drivers/mem_interface/src/fsl_mem_interface.c:116:10:MEM_EraseAll	16	static
+../drivers/mem_interface/src/fsl_mem_interface.c:123:10:MEM_Config	24	static
+../drivers/mem_interface/src/fsl_mem_interface.c:130:10:MEM_Flush	16	static
+../drivers/mem_interface/src/fsl_mem_interface.c:137:10:Sbloader_Init	16	static
+../drivers/mem_interface/src/fsl_mem_interface.c:144:10:Sbloader_Pump	24	static
+../drivers/mem_interface/src/fsl_mem_interface.c:150:10:Sbloader_Finalize	16	static

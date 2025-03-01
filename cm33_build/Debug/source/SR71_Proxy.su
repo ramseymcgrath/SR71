@@ -1,0 +1,6 @@
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_lpspi.h:550:24:LPSPI_GetStatusFlags	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_lpspi.h:608:20:LPSPI_ClearStatusFlags	16	static
+../source/SR71_Proxy.c:114:21:USB_HostEvent	32	static
+../source/SR71_Proxy.c:172:6:process_udp_packet	312	static
+../source/SR71_Proxy.c:233:5:main	8	static
+../source/SR71_Proxy.c:282:6:LP_FLEXCOMM4_IRQHandler	16	static

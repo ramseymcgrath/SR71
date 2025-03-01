@@ -1,0 +1,1 @@
+../drivers/runbootloader/src/fsl_runbootloader.c:48:6:bootloader_user_entry	16	static

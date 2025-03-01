@@ -1,0 +1,17 @@
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/CMSIS/core_cm33.h:2555:22:__NVIC_SetPriority	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_ctimer.h:497:20:CTIMER_StartTimer	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_ctimer.h:507:20:CTIMER_StopTimer	16	static
+../component/timer/fsl_adapter_ctimer.c:41:13:HAL_TimerInterruptHandle	24	static
+../component/timer/fsl_adapter_ctimer.c:52:6:ctimer0_match0_callback	16	static
+../component/timer/fsl_adapter_ctimer.c:58:6:ctimer1_match0_callback	16	static
+../component/timer/fsl_adapter_ctimer.c:64:27:HAL_CTimerConfigTimeout	64	static
+../component/timer/fsl_adapter_ctimer.c:98:20:HAL_TimerInit	40	static
+../component/timer/fsl_adapter_ctimer.c:117:6:HAL_TimerDeinit	24	static
+../component/timer/fsl_adapter_ctimer.c:125:6:HAL_TimerEnable	24	static
+../component/timer/fsl_adapter_ctimer.c:133:6:HAL_TimerDisable	24	static
+../component/timer/fsl_adapter_ctimer.c:141:6:HAL_TimerInstallCallback	32	static
+../component/timer/fsl_adapter_ctimer.c:149:10:HAL_TimerGetMaxTimeout	96	static
+../component/timer/fsl_adapter_ctimer.c:162:10:HAL_TimerGetCurrentTimerCount	72	static
+../component/timer/fsl_adapter_ctimer.c:169:20:HAL_TimerUpdateTimeout	16	static
+../component/timer/fsl_adapter_ctimer.c:174:6:HAL_TimerExitLowpower	16	static
+../component/timer/fsl_adapter_ctimer.c:179:6:HAL_TimerEnterLowpower	16	static

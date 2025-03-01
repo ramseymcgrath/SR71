@@ -1,0 +1,6 @@
+../source/usb_host_interface_0_hid_mouse.c:79:13:USB_HostMouseProcessBuffer	16	static
+../source/usb_host_interface_0_hid_mouse.c:165:13:USB_HostHidControlCallback	32	static
+../source/usb_host_interface_0_hid_mouse.c:191:13:USB_HostHidInCallback	32	static
+../source/usb_host_interface_0_hid_mouse.c:211:6:USB_HostInterface0HidMouseTask	48	static
+../source/usb_host_interface_0_hid_mouse.c:385:14:USB_HostInterface0HidMouseEvent	48	static
+../source/usb_host_interface_0_hid_mouse.c:492:14:USB_HostInterface0HidMouseInit	4	static

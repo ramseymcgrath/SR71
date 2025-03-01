@@ -1,0 +1,11 @@
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/CMSIS/core_cm33.h:2358:22:__NVIC_EnableIRQ	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/CMSIS/core_cm33.h:2555:22:__NVIC_SetPriority	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_clock.h:1489:20:CLOCK_EnableClock	24	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/SR71_Proxy/drivers/fsl_common_arm.h:667:24:EnableIRQ	24	static
+../source/generated/usb_host_app.c:73:6:USB0_FS_IRQHandler	8	static
+../source/generated/usb_host_app.c:81:6:USB_HostClockInit	8	static
+../source/generated/usb_host_app.c:123:6:USB_HostIsrEnable	16	static
+../source/generated/usb_host_app.c:157:6:USB_HostTaskFn	16	static
+../source/generated/usb_host_app.c:176:21:USB_HostEvent	32	static
+../source/generated/usb_host_app.c:242:14:USB_HostApplicationInit	16	static
+../source/generated/usb_host_app.c:268:6:USB_HostTasks	8	static
