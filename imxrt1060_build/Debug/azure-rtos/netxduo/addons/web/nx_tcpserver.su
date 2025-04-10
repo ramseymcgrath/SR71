@@ -1,0 +1,15 @@
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:86:13:_nx_tcpserver_session_allocate	24	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:171:13:_nx_tcpserver_relisten	24	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:289:6:_nx_tcpserver_create	64	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:669:6:_nx_tcpserver_start	40	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:743:13:_nx_tcpserver_connect_present	24	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:795:13:_nx_tcpserver_data_present	24	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:844:13:_nx_tcpserver_disconnect_present	24	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:892:13:_nx_tcpserver_timeout	24	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:955:13:_nx_tcpserver_connect_process	24	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:1098:13:_nx_tcpserver_data_process	24	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:1172:13:_nx_tcpserver_disconnect_process	24	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:1252:13:_nx_tcpserver_timeout_process	24	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:1344:13:_nx_tcpserver_thread_entry	40	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:1448:6:_nx_tcpserver_stop	24	static
+../azure-rtos/netxduo/addons/web/nx_tcpserver.c:1524:6:_nx_tcpserver_delete	24	static

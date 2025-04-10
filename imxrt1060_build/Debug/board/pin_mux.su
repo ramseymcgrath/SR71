@@ -1,0 +1,7 @@
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/drivers/fsl_common_arm.h:225:20:_SDK_AtomicLocalClearAndSet4Byte	48	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/drivers/fsl_clock.h:1496:20:CLOCK_ControlGate	32	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/drivers/fsl_clock.h:1513:20:CLOCK_EnableClock	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/drivers/fsl_iomuxc.h:1288:20:IOMUXC_SetPinMux	24	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/drivers/fsl_iomuxc.h:1320:20:IOMUXC_SetPinConfig	24	static
+../board/pin_mux.c:34:6:BOARD_InitBootPins	8	static
+../board/pin_mux.c:56:6:BOARD_InitPins	16	static

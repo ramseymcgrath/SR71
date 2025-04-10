@@ -1,0 +1,14 @@
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:86:6:_nxe_cloud_create	40	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:165:6:_nx_cloud_create	64	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:295:6:_nxe_cloud_delete	24	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:368:6:_nx_cloud_delete	24	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:468:6:_nxe_cloud_module_register	40	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:547:6:_nx_cloud_module_register	32	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:632:6:_nxe_cloud_module_deregister	24	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:697:6:_nx_cloud_module_deregister	32	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:794:6:_nxe_cloud_module_event_set	24	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:862:6:_nx_cloud_module_event_set	40	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:933:6:_nxe_cloud_module_event_clear	24	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:1001:6:_nx_cloud_module_event_clear	48	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:1079:13:_nx_cloud_thread_entry	56	static
+../azure-rtos/netxduo/addons/cloud/nx_cloud.c:1179:13:_nx_cloud_periodic_timer_entry	24	static

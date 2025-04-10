@@ -1,0 +1,8 @@
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/CMSIS/mpu_armv7.h:191:22:ARM_MPU_Enable	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/CMSIS/mpu_armv7.h:204:22:ARM_MPU_Disable	4	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/drivers/fsl_clock.h:1434:24:CLOCK_GetMux	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/drivers/fsl_clock.h:1485:24:CLOCK_GetDiv	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/drivers/fsl_clock.h:1546:24:CLOCK_GetOscFreq	4	static
+../board/board.c:24:10:BOARD_DebugConsoleSrcFreq	24	static
+../board/board.c:43:6:BOARD_InitDebugConsole	16	static
+../board/board.c:248:6:BOARD_ConfigMPU	48	static

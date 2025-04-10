@@ -1,8 +1,0 @@
-../source/usb_host_interface_1_hid_generic.c:112:13:USB_HostHidGenericProcessBuffer	16	static
-../source/usb_host_interface_1_hid_generic.c:119:13:USB_HostControlCallback	32	static
-../source/usb_host_interface_1_hid_generic.c:157:13:USB_HostInCallback	32	static
-../source/usb_host_interface_1_hid_generic.c:177:13:USB_HostOutCallback	24	static
-../source/usb_host_interface_1_hid_generic.c:181:21:USB_HostHidGenericPrepareOutData	24	static
-../source/usb_host_interface_1_hid_generic.c:208:6:USB_HostInterface1HidGenericTask	48	static
-../source/usb_host_interface_1_hid_generic.c:415:14:USB_HostInterface1HidGenericInit	4	static
-../source/usb_host_interface_1_hid_generic.c:420:14:USB_HostInterface1HidGenericEvent	56	static

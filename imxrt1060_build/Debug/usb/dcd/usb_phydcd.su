@@ -1,0 +1,4 @@
+../usb/dcd/usb_phydcd.c:56:21:USB_PHYDCD_Init	56	static
+../usb/dcd/usb_phydcd.c:86:21:USB_PHYDCD_Deinit	24	static
+../usb/dcd/usb_phydcd.c:102:21:USB_PHYDCD_Control	32	static
+../usb/dcd/usb_phydcd.c:138:21:USB_PHYDCD_TimerIsrFunction	64	static

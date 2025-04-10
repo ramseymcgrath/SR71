@@ -1,9 +1,0 @@
-../drivers/fsl_wuu.c:56:6:WUU_SetExternalWakeUpPinsConfig	48	static
-../drivers/fsl_wuu.c:127:6:WUU_ClearExternalWakeupPinsConfig	16	static
-../drivers/fsl_wuu.c:150:6:WUU_SetInternalWakeUpModulesConfig	16	static
-../drivers/fsl_wuu.c:173:6:WUU_ClearInternalWakeUpModulesConfig	16	static
-../drivers/fsl_wuu.c:199:6:WUU_SetPinFilterConfig	40	static
-../drivers/fsl_wuu.c:245:6:WUU_GetPinFilterFlag	24	static
-../drivers/fsl_wuu.c:273:6:WUU_ClearPinFilterFlag	24	static
-../drivers/fsl_wuu.c:296:6:WUU_GetExternalWakeupPinFlag	16	static
-../drivers/fsl_wuu.c:309:6:WUU_ClearExternalWakeupPinFlag	16	static

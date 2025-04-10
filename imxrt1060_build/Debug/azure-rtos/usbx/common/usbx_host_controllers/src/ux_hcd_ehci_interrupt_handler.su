@@ -1,0 +1,1 @@
+../azure-rtos/usbx/common/usbx_host_controllers/src/ux_hcd_ehci_interrupt_handler.c:86:7:_ux_hcd_ehci_interrupt_handler	40	static

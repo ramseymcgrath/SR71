@@ -1,0 +1,5 @@
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/CMSIS/core_cm7.h:2041:22:__NVIC_SetPriority	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/CMSIS/core_cm7.h:2259:26:SysTick_Config	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/drivers/fsl_common_arm.h:788:24:DisableGlobalIRQ	16	static
+../azure-rtos/threadx/ports/common/tx_initialize_low_level.c:43:6:_tx_initialize_low_level	8	static
+../azure-rtos/threadx/ports/common/tx_initialize_low_level.c:65:6:SysTick_Handler	8	static

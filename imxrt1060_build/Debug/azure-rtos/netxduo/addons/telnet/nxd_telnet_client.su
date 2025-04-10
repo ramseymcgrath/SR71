@@ -1,0 +1,14 @@
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:86:7:_nxde_telnet_client_connect	32	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:161:7:_nxd_telnet_client_connect	32	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:253:7:_nxe_telnet_client_connect	32	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:336:7:_nx_telnet_client_connect	48	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:402:7:_nxe_telnet_client_create	32	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:464:7:_nx_telnet_client_create	56	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:543:7:_nxe_telnet_client_delete	24	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:607:7:_nx_telnet_client_delete	16	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:670:7:_nxe_telnet_client_disconnect	24	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:734:7:_nx_telnet_client_disconnect	16	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:799:7:_nxe_telnet_client_packet_receive	32	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:863:7:_nx_telnet_client_packet_receive	32	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:920:7:_nxe_telnet_client_packet_send	32	static
+../azure-rtos/netxduo/addons/telnet/nxd_telnet_client.c:984:7:_nx_telnet_client_packet_send	32	static

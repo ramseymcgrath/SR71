@@ -1,0 +1,4 @@
+../azure-rtos/netxduo/addons/snmp/nx_des.c:202:7:_nx_des_key_set	40	static
+../azure-rtos/netxduo/addons/snmp/nx_des.c:353:7:_nx_des_encrypt	24	static
+../azure-rtos/netxduo/addons/snmp/nx_des.c:411:7:_nx_des_decrypt	24	static
+../azure-rtos/netxduo/addons/snmp/nx_des.c:470:7:_nx_des_process_block	48	static

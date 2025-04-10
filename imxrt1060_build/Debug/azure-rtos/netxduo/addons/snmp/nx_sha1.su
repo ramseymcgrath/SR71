@@ -1,0 +1,4 @@
+../azure-rtos/netxduo/addons/snmp/nx_sha1.c:116:7:_nx_sha1_initialize	16	static
+../azure-rtos/netxduo/addons/snmp/nx_sha1.c:183:7:_nx_sha1_update	32	static
+../azure-rtos/netxduo/addons/snmp/nx_sha1.c:309:7:_nx_sha1_digest_calculate	32	static
+../azure-rtos/netxduo/addons/snmp/nx_sha1.c:407:7:_nx_sha1_process_buffer	48	static

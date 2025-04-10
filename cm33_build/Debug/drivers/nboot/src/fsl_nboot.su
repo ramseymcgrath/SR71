@@ -1,7 +1,0 @@
-../drivers/nboot/src/fsl_nboot.c:80:10:NBOOT_GenerateRandom	16	static
-../drivers/nboot/src/fsl_nboot.c:95:16:NBOOT_ContextInit	16	static
-../drivers/nboot/src/fsl_nboot.c:110:16:NBOOT_ContextDeinit	16	static
-../drivers/nboot/src/fsl_nboot.c:132:26:NBOOT_Sb3LoadManifest	24	static
-../drivers/nboot/src/fsl_nboot.c:155:26:NBOOT_Sb3LoadBlock	16	static
-../drivers/nboot/src/fsl_nboot.c:179:26:NBOOT_ImgAuthenticateEcdsa	32	static
-../drivers/nboot/src/fsl_nboot.c:204:26:NBOOT_ImgAuthenticateCmac	32	static

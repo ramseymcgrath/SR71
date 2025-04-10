@@ -1,0 +1,1 @@
+../azure-rtos/usbx/common/usbx_host_controllers/src/ux_hcd_ehci_request_bulk_transfer.c:76:7:_ux_hcd_ehci_request_bulk_transfer	72	static

@@ -1,0 +1,1 @@
+../ports/ux_hcd_interrupt_handler.c:14:6:USB_OTG1_IRQHandler	8	static

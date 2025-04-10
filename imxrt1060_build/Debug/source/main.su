@@ -1,0 +1,14 @@
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/CMSIS/core_cm7.h:1911:22:__NVIC_EnableIRQ	16	static
+/Users/ramseymcgrath/code/embedded/mcuxpresso_workspace/evkmimxrt1060_usbx_host_hid_mouse/CMSIS/core_cm7.h:2041:22:__NVIC_SetPriority	16	static
+../source/main.c:80:6:usbx_host_change_callback	32	static
+../source/main.c:93:6:clone_thread	136	static
+../source/main.c:208:6:tx_application_define	56	static
+../source/main.c:230:5:main	8	static
+../source/main.c:248:6:usb_host_hw_setup	16	static
+../source/main.c:259:6:usbx_host_hcd_register	8	static
+../source/main.c:266:6:usb_device_hw_setup	16	static
+../source/main.c:283:6:usbx_device_controller_init	8	static
+../source/main.c:290:6:USB_OTG1_IRQHandler	8	static
+../source/main.c:295:6:USB_OTG2_IRQHandler	8	static
+../source/main.c:301:6:usbx_host_control_transfer	32	static
+../source/main.c:338:6:ux_host_hid_report_descriptor_fetch	48	static

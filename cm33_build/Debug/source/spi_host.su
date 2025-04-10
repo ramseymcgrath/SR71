@@ -1,4 +1,0 @@
-../source/spi_host.c:37:13:SPI_Callback	24	static
-../source/spi_host.c:59:6:SPI_Host_Init	48	static
-../source/spi_host.c:87:10:SPI_Host_Transfer	48	static
-../source/spi_host.c:122:6:SPI_SendUsbPacket	24	static

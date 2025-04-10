@@ -1,0 +1,14 @@
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:97:7:_nxe_auto_ip_create	48	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:166:7:_nx_auto_ip_create	56	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:261:7:_nxe_auto_ip_set_interface	32	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:323:7:_nx_auto_ip_set_interface	16	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:384:7:_nxe_auto_ip_get_address	24	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:443:7:_nx_auto_ip_get_address	24	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:516:7:_nxe_auto_ip_start	32	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:583:7:_nx_auto_ip_start	16	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:644:7:_nxe_auto_ip_stop	24	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:705:7:_nx_auto_ip_stop	24	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:759:7:_nxe_auto_ip_delete	24	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:822:7:_nx_auto_ip_delete	24	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:908:7:_nx_auto_ip_thread_entry	64	static
+../azure-rtos/netxduo/addons/auto_ip/nx_auto_ip.c:1244:7:_nx_auto_ip_conflict	24	static
